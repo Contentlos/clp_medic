@@ -5,8 +5,8 @@ Standalone ESX medic system built for ox_target and ox_inventory. Designed to gr
 ## Features
 - On/Off-duty system at configurable duty points (ox_target zones)
 - Revive, stabilize (light/medium/heavy), painkillers, and EKG status checks with animations and progress bars
-- Added: death/injury NUI overlay with animated EKG line and state text (stable/unstable/flatline)
-- Added: dispatch/Leitstelle tablet UI with EMS calls (auto-created on player down), assignments, and completion tracking
+- Added: cyberpunk-style death/injury NUI overlay with animated EKG line, manual distress hint, and state text (stable/unstable/flatline)
+- Added: dispatch/Leitstelle tablet UI (F6 or command) with EMS calls, assignments, completion tracking, and alert pulse/sound for new calls
 - Medic bag item that opens a treatment menu for the closest patient
 - Added: defibrillator item for advanced revive attempts with configurable success chance
 - Added: carry interaction to move downed players and put them down again
@@ -20,7 +20,7 @@ Standalone ESX medic system built for ox_target and ox_inventory. Designed to gr
 - `config.lua` – all positions, items, vehicles, timing values, and compatibility flags
 - `client/main.lua` – duty handling, player interactions, medic bag flow, vitals (resets NUI on revive)
 - `client/garage.lua` – garage target zones and spawn logic (livery 4, extras on)
-- `client/deathscreen.lua` – death screen + EKG overlay control
+- `client/deathscreen.lua` – death screen + EKG overlay control (manual dispatch key prompt)
 - `client/carry.lua` – ox_target player options for carrying/putting down patients
 - `client/defib.lua` – defibrillator item usability and animation
 - `server/main.lua` – duty state tracking, usable medic bag registration
@@ -37,7 +37,7 @@ Update `config.lua` to match your server:
 - `Config.Items` – change item names to match your ox_inventory items.
 - `Config.TreatmentTimes` / `Config.HealthAdjust` – tune how long treatments take and how much health is restored.
 - `Config.Defib` – success chance + notifications for the defibrillator flow.
-- `Config.Dispatch` – command name, whether the tablet command is enabled, and if on-duty is required for dispatch access.
+- `Config.Dispatch` – command name, panic key (default G) to send a dispatch while downed, F6 keybind for the tablet, alert sounds, on-duty requirements.
 
 ### Adding vehicles
 Append to `Config.Garages[<index>].vehicles`:
@@ -74,7 +74,7 @@ INSERT INTO items (name, label, weight, stack, closeonuse, description) VALUES
 
 ## Dispatch / Leitstelle
 - EMS-only tablet (`/ems` by default) shows active calls, assignment status, and completion buttons.
-- Calls are auto-created when a player enters the downed/death state; completing a revive clears the call.
+- Calls can be created via the panic key while downed (default **G**), the `/ems` command, or automatically if `Config.Dispatch.AutoOnDeath = true`; completing a revive clears the call.
 - Changing the command or requiring on-duty access is handled in `Config.Dispatch`.
 
 ## Testing

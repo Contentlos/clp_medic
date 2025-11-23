@@ -44,6 +44,16 @@ local function broadcastCalls()
     end
 end
 
+-- NEW: notify EMS/dispatch players with audio/visual alert when a new call is created
+AddEventHandler('clp_medic:dispatch:alertAll', function(callData)
+    for _, xPlayer in pairs(ESX.GetExtendedPlayers()) do
+        local src = xPlayer.source
+        if canAccessDispatch(src) then
+            TriggerClientEvent('clp_medic:dispatch:alert', src, callData)
+        end
+    end
+end)
+
 local function createCall(src, coords, reason)
     local id = nextCallId
     nextCallId = nextCallId + 1
@@ -65,6 +75,7 @@ local function createCall(src, coords, reason)
         callIndexByPlayer[src] = id
     end
     broadcastCalls()
+    TriggerEvent('clp_medic:dispatch:alertAll', callData)
 end
 
 local function updateCallStatus(src, callId, status)
@@ -99,7 +110,7 @@ RegisterNetEvent('clp_medic:dispatch:updateStatus', function(callId, status)
     updateCallStatus(src, callId, status)
 end)
 
--- NEW: automatic dispatch for downed players
+-- NEW: automatic dispatch for downed players (can be disabled via Config.Dispatch.AutoOnDeath)
 RegisterNetEvent('clp_medic:playerDown', function(coords)
     local src = source
     Player(src).state:set('clp_medic_downed', true, true)
@@ -108,7 +119,21 @@ RegisterNetEvent('clp_medic:playerDown', function(coords)
         coords = { x = coords.x, y = coords.y, z = coords.z }
     end
 
-    createCall(src, coords, 'Bewusstloser Spieler')
+    if Config.Dispatch.AutoOnDeath then
+        createCall(src, coords, 'Bewusstloser Spieler')
+    end
+end)
+
+-- NEW: manual panic/dispatch trigger from player (bound to Config.Dispatch.PanicKey)
+RegisterNetEvent('clp_medic:dispatch:panic', function(coords)
+    local src = source
+    if callIndexByPlayer[src] then return end
+
+    if coords then
+        coords = { x = coords.x, y = coords.y, z = coords.z }
+    end
+
+    createCall(src, coords, 'Bewusstloser Spieler (Panik)')
 end)
 
 RegisterNetEvent('clp_medic:playerRevived', function()

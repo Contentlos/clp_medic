@@ -90,7 +90,13 @@ Config.Defib = {
 Config.Dispatch = {
     Command = 'ems', -- chat command to open EMS tablet/dispatch
     EnableCommand = true,
-    RequireOnDuty = true
+    RequireOnDuty = true,
+    -- NEW: manual distress key (hold/press while downed to send dispatch)
+    PanicKey = 47, -- default: G key
+    PanicKeyLabel = 'G', -- UI hint label
+    AutoOnDeath = false, -- when false, player must press PanicKey to send dispatch
+    OpenKey = 'F6', -- key binding for the leitstelle tablet
+    AlertSound = { sound = 'TIMER_STOP', set = 'HUD_MINI_GAME_SOUNDSET' }
 }
 
 -- Maximum distance for targeting nearby patients

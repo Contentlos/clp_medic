@@ -65,6 +65,20 @@ RegisterNetEvent('clp_medic:dispatch:update', function(calls)
     end
 end)
 
+-- NEW: alert dispatch/EMS with visual + audio cue on new calls
+RegisterNetEvent('clp_medic:dispatch:alert', function(callData)
+    if not canAccessDispatch() then return end
+
+    local sound = Config.Dispatch.AlertSound or {}
+    if sound.sound then
+        PlaySoundFrontend(-1, sound.sound, sound.set or 'HUD_MINI_GAME_SOUNDSET', true)
+    end
+
+    ESX.ShowNotification(('Neuer Notruf #%s: %s'):format(callData.id or '?', callData.reason or 'Einsatz'))
+
+    SendNUIMessage({ action = 'dispatchPing', call = callData })
+end)
+
 if Config.Dispatch.EnableCommand then
     RegisterCommand(Config.Dispatch.Command, function()
         if not canAccessDispatch() then
@@ -73,6 +87,9 @@ if Config.Dispatch.EnableCommand then
         end
         TriggerServerEvent('clp_medic:dispatch:request')
     end, false)
+
+    -- NEW: bind leitstelle/tablet to Config.Dispatch.OpenKey (default F6)
+    RegisterKeyMapping(Config.Dispatch.Command, 'EMS Leitstelle öffnen', 'keyboard', Config.Dispatch.OpenKey or 'F6')
 end
 
 -- Close tablet on resource stop to free focus

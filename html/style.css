@@ -1,10 +1,16 @@
-/* Added: simple dark overlay with blur and EKG line */
+/* Cyberpunk-inspired overlay + dispatch tablet */
 :root {
-    --overlay-bg: rgba(5, 10, 20, 0.85);
-    --accent: #4ade80;
-    --warning: #f87171;
+    --overlay-bg: radial-gradient(circle at 20% 20%, rgba(0,255,200,0.08), transparent 45%),
+                  radial-gradient(circle at 80% 30%, rgba(255,0,120,0.08), transparent 40%),
+                  rgba(5, 8, 20, 0.9);
+    --accent: #16f2d1;
+    --accent-2: #ff3fa4;
+    --warning: #ff6868;
     --text: #e5e7eb;
-    --blur: 8px;
+    --muted: #9ca3af;
+    --glass: rgba(10, 15, 32, 0.75);
+    --border: rgba(255,255,255,0.08);
+    --glow: 0 0 16px rgba(22, 242, 209, 0.6);
 }
 
 body, html {
@@ -17,6 +23,9 @@ body, html {
     background: transparent;
 }
 
+.hidden { display: none !important; }
+
+/* Death / injury overlay */
 #overlay {
     position: absolute;
     inset: 0;
@@ -26,45 +35,60 @@ body, html {
     pointer-events: none;
 }
 
-#dispatch {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: rgba(0, 0, 0, 0.45);
-    backdrop-filter: blur(4px);
-    z-index: 5;
-}
-
-.hidden {
-    display: none !important;
-}
-
 .backdrop {
     position: absolute;
     inset: 0;
     background: var(--overlay-bg);
-    backdrop-filter: blur(var(--blur));
+    backdrop-filter: blur(12px);
     z-index: 1;
+}
+
+.scanlines {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(255,255,255,0.04),
+        rgba(255,255,255,0.04) 1px,
+        transparent 1px,
+        transparent 3px
+    );
+    mix-blend-mode: soft-light;
+    opacity: 0.35;
+    z-index: 2;
 }
 
 .content {
     position: relative;
-    z-index: 2;
+    z-index: 3;
     text-align: center;
     color: var(--text);
-    padding: 32px 48px;
-    border-radius: 12px;
-    background: rgba(15, 23, 42, 0.6);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
-    width: 480px;
+    padding: 32px 52px;
+    border-radius: 14px;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    box-shadow: var(--glow), 0 28px 80px rgba(0,0,0,0.55);
+    min-width: 520px;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04);
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
 }
 
 .message {
     font-size: 24px;
-    font-weight: 600;
-    margin-bottom: 18px;
+    font-weight: 700;
+    margin: 18px 0 10px;
 }
 
 .ekg {
@@ -77,36 +101,59 @@ body, html {
 .ekg-line {
     position: relative;
     width: 100%;
-    height: 80px;
+    height: 90px;
     overflow: hidden;
     background: linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.08));
-    border-radius: 8px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
 }
 
 .pulse {
     position: absolute;
-    left: -40%;
+    left: -50%;
     top: 50%;
-    width: 70%;
-    height: 2px;
+    width: 80%;
+    height: 3px;
     background: linear-gradient(90deg, transparent, var(--accent), transparent);
     box-shadow: 0 0 16px var(--accent);
-    animation: pulseMove 2.4s linear infinite, heartbeat 1.2s ease-in-out infinite;
+    animation: pulseMove 2.2s linear infinite, heartbeat 1.1s ease-in-out infinite;
 }
 
 .state {
     font-size: 18px;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--accent);
 }
 
-.state.unstable {
-    color: #fbbf24;
+.state.unstable { color: #f6c344; }
+.state.flatline { color: var(--warning); }
+
+.callout {
+    margin-top: 16px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-2);
+    box-shadow: 0 0 16px rgba(255,63,164,0.45);
 }
 
-.state.flatline {
-    color: var(--warning);
+.callout.sent {
+    color: var(--accent);
+    box-shadow: 0 0 20px rgba(22,242,209,0.5);
+}
+
+.callout span { color: #fff; }
+
+.subtext {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 14px;
+    letter-spacing: 0.04em;
 }
 
 @keyframes pulseMove {
@@ -116,21 +163,43 @@ body, html {
 
 @keyframes heartbeat {
     0% { box-shadow: 0 0 10px var(--accent); }
-    50% { box-shadow: 0 0 26px var(--accent); }
+    50% { box-shadow: 0 0 28px var(--accent); }
     100% { box-shadow: 0 0 10px var(--accent); }
 }
 
-/* NEW: tablet/dispatch styles */
+/* Tablet/dispatch styles */
+#dispatch {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(6px);
+    z-index: 5;
+}
+
 .tablet {
-    background: #0f172a;
+    position: relative;
+    background: linear-gradient(135deg, rgba(10,14,30,0.95), rgba(7,10,26,0.92));
     color: var(--text);
-    width: 620px;
-    max-height: 80vh;
-    border-radius: 12px;
-    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+    width: 680px;
+    max-height: 82vh;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55), var(--glow);
     display: flex;
     flex-direction: column;
     overflow: hidden;
+}
+
+.tablet-glow {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, rgba(22,242,209,0.12), transparent 40%),
+                linear-gradient(300deg, rgba(255,63,164,0.12), transparent 35%);
+    filter: blur(30px);
+    pointer-events: none;
 }
 
 .tablet-header {
@@ -138,30 +207,40 @@ body, html {
     justify-content: space-between;
     align-items: center;
     padding: 16px 20px;
-    background: #111827;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    z-index: 2;
 }
 
 .tablet-header .title {
     font-size: 18px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
+    font-weight: 800;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
 }
 
 #dispatch-close {
     background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     color: var(--text);
-    border-radius: 6px;
-    padding: 6px 10px;
+    border-radius: 10px;
+    padding: 6px 12px;
     cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#dispatch-close:hover {
+    box-shadow: var(--glow);
+    color: var(--accent);
 }
 
 .tablet-body {
     padding: 16px;
     overflow-y: auto;
-    background: #0b1221;
+    background: rgba(255,255,255,0.015);
+    position: relative;
+    z-index: 2;
 }
 
 .call-list {
@@ -171,10 +250,11 @@ body, html {
 }
 
 .call-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 10px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 12px;
     padding: 12px 14px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.35);
 }
 
 .call-card .header {
@@ -182,34 +262,45 @@ body, html {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 6px;
-    font-weight: 700;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+
+.call-card .status {
+    color: var(--accent-2);
+    font-size: 12px;
+    letter-spacing: 0.14em;
 }
 
 .call-card .meta {
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.85);
     margin-bottom: 8px;
 }
 
 .call-card .actions {
     display: flex;
     gap: 8px;
+    flex-wrap: wrap;
 }
 
 .call-card button {
-    background: #2563eb;
-    color: #fff;
+    background: linear-gradient(135deg, #1f9cf0, #16f2d1);
+    color: #0b0f1f;
     border: none;
-    border-radius: 6px;
-    padding: 6px 10px;
+    border-radius: 8px;
+    padding: 7px 12px;
     cursor: pointer;
-    font-weight: 600;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    box-shadow: 0 0 14px rgba(22,242,209,0.4);
 }
 
-.call-card button.secondary {
-    background: #14b8a6;
-}
+.call-card button.secondary { background: linear-gradient(135deg, #f6c344, #ff9f1c); }
+.call-card button.danger { background: linear-gradient(135deg, #ff4b6e, #ff3fa4); }
 
-.call-card button.danger {
-    background: #dc2626;
+/* Dispatch alert pulse */
+#dispatch.flash .tablet {
+    box-shadow: 0 0 20px rgba(255,63,164,0.55), var(--glow);
 }

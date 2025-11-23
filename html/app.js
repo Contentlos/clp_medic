@@ -1,9 +1,15 @@
-// Added: simple NUI controller for death screen & EKG
+// NUI controller for death screen & EMS dispatch tablet
 const overlay = document.getElementById('overlay');
 const ekgState = document.getElementById('ekg-state');
-const dispatch = document.getElementById('dispatch');
+const panicKey = document.getElementById('panic-key');
+const distress = document.getElementById('distress');
+const subtext = document.querySelector('.subtext');
+const dispatchWrapper = document.getElementById('dispatch');
 const callList = document.getElementById('call-list');
 const closeDispatchBtn = document.getElementById('dispatch-close');
+
+const defaultDistressText = distress ? distress.innerHTML : '';
+const defaultSubtext = subtext ? subtext.textContent : '';
 
 function setState(state) {
     ekgState.classList.remove('unstable', 'flatline');
@@ -20,7 +26,19 @@ function setState(state) {
     ekgState.textContent = text;
 }
 
-function toggleOverlay(visible, state) {
+function toggleOverlay(visible, state, panicLabel) {
+    if (panicLabel && panicKey) {
+        panicKey.textContent = panicLabel;
+    }
+
+    if (distress) {
+        distress.classList.remove('sent');
+        distress.innerHTML = defaultDistressText;
+    }
+    if (subtext) {
+        subtext.textContent = defaultSubtext;
+    }
+
     if (visible) {
         overlay.classList.remove('hidden');
     } else {
@@ -28,6 +46,16 @@ function toggleOverlay(visible, state) {
     }
     if (state) {
         setState(state);
+    }
+}
+
+function markDistressSent() {
+    if (distress) {
+        distress.classList.add('sent');
+        distress.textContent = 'Dispatch ping transmitted // EMS notified';
+    }
+    if (subtext) {
+        subtext.textContent = 'Stay calm. Signal locked to EMS network.';
     }
 }
 
@@ -48,7 +76,7 @@ function renderCalls(calls = []) {
         card.innerHTML = `
             <div class="header">
                 <span>Call #${call.id || '?'} - ${call.reason || 'Dispatch'}</span>
-                <span>${(call.status || 'waiting').toUpperCase()}</span>
+                <span class="status">${(call.status || 'waiting').toUpperCase()}</span>
             </div>
             <div class="meta">Caller: ${call.callerName || 'Unbekannt'} | Coords: ${formatCoords(call.coords)}</div>
             <div class="meta">Units: ${assignedUnits.length > 0 ? assignedUnits.join(', ') : 'Unassigned'}</div>
@@ -65,11 +93,12 @@ function renderCalls(calls = []) {
 
 function toggleDispatch(visible, calls) {
     if (visible) {
-        dispatch.classList.remove('hidden');
+        dispatchWrapper.classList.remove('hidden');
         renderCalls(calls || []);
     } else {
-        dispatch.classList.add('hidden');
+        dispatchWrapper.classList.add('hidden');
     }
+    dispatchWrapper.classList.remove('flash');
 }
 
 function nui(eventName, data = {}) {
@@ -83,11 +112,15 @@ function nui(eventName, data = {}) {
 window.addEventListener('message', (event) => {
     const data = event.data || {};
     if (data.action === 'toggle') {
-        toggleOverlay(data.visible, data.status);
+        toggleOverlay(data.visible, data.status, data.panicLabel);
     }
 
     if (data.action === 'setState') {
         setState(data.status);
+    }
+
+    if (data.action === 'dispatchSent') {
+        markDistressSent();
     }
 
     if (data.action === 'dispatchOpen') {
@@ -100,6 +133,12 @@ window.addEventListener('message', (event) => {
 
     if (data.action === 'dispatchClose') {
         toggleDispatch(false);
+    }
+
+    if (data.action === 'dispatchPing') {
+        dispatchWrapper.classList.remove('flash');
+        void dispatchWrapper.offsetWidth; // restart animation/class
+        dispatchWrapper.classList.add('flash');
     }
 });
 

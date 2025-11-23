@@ -11,22 +11,27 @@
     <!-- Added: death/injury overlay with EKG monitor -->
     <div id="overlay" class="hidden">
         <div class="backdrop"></div>
+        <div class="scanlines"></div>
         <div class="content">
+            <div class="badge">CRITICAL // BIO-SIG</div>
             <div class="message">You are critically injured – wait for EMS</div>
             <div class="ekg">
                 <div class="ekg-line">
                     <div class="pulse"></div>
                 </div>
-                <div class="state" id="ekg-state">Stable</div>
+                <div class="state" id="ekg-state">Flatline</div>
             </div>
+            <div class="callout" id="distress">Press <span id="panic-key">G</span> to send dispatch</div>
+            <div class="subtext">Signal is offline until you send a distress ping.</div>
         </div>
     </div>
 
     <!-- NEW: EMS dispatch / tablet UI -->
     <div id="dispatch" class="hidden">
         <div class="tablet">
+            <div class="tablet-glow"></div>
             <div class="tablet-header">
-                <div class="title">EMS Dispatch</div>
+                <div class="title">EMS // NET DISPATCH</div>
                 <button id="dispatch-close" aria-label="Close dispatch">&times;</button>
             </div>
             <div class="tablet-body">

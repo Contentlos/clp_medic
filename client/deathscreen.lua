@@ -1,6 +1,8 @@
--- Added: death screen + EKG NUI handling
+-- Added: death screen + EKG NUI handling (cyber style)
 local isDowned = false
+local dispatchSent = false
 local currentState = 'stable'
+local lastCoords
 
 local function sendUI(payload)
     SendNUIMessage(payload)
@@ -13,7 +15,9 @@ local function toggleDeathUI(state, ekgState)
     sendUI({
         action = 'toggle',
         visible = state,
-        status = currentState
+        status = currentState,
+        panicKey = Config.Dispatch.PanicKey,
+        panicLabel = Config.Dispatch.PanicKeyLabel
     })
 end
 
@@ -31,7 +35,9 @@ RegisterNetEvent('esx:onPlayerDeath', function()
     -- NEW: mark player as downed and notify server/dispatch
     isDowned = true
     LocalPlayer.state:set('clp_medic_downed', true, true)
-    TriggerServerEvent('clp_medic:playerDown', GetEntityCoords(PlayerPedId()))
+    dispatchSent = false
+    lastCoords = GetEntityCoords(PlayerPedId())
+    TriggerServerEvent('clp_medic:playerDown', lastCoords)
     toggleDeathUI(true, 'flatline')
 end)
 
@@ -48,6 +54,7 @@ end)
 -- Added: hide overlay on spawn
 AddEventHandler('playerSpawned', function()
     isDowned = false
+    dispatchSent = false
     LocalPlayer.state:set('clp_medic_downed', false, true)
     TriggerServerEvent('clp_medic:playerRevived')
     toggleDeathUI(false, 'stable')
@@ -60,6 +67,15 @@ CreateThread(function()
             DisableAllControlActions(0)
             EnableControlAction(0, 1, true)
             EnableControlAction(0, 2, true)
+            EnableControlAction(0, Config.Dispatch.PanicKey, true)
+
+            -- NEW: manual distress trigger on panic key (Config.Dispatch.PanicKey, default G)
+            if not dispatchSent and IsControlJustReleased(0, Config.Dispatch.PanicKey) then
+                dispatchSent = true
+                local coords = lastCoords or GetEntityCoords(PlayerPedId())
+                TriggerServerEvent('clp_medic:dispatch:panic', coords)
+                sendUI({ action = 'dispatchSent' })
+            end
         end
         Wait(0)
     end
