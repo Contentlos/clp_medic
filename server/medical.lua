@@ -48,6 +48,26 @@ local function handleEKG(xPlayer, target)
     TriggerClientEvent('clp_medic:checkVitals', target, xPlayer.source)
 end
 
+-- Added: defibrillator revive
+local function handleDefib(xPlayer, target)
+    if not hasItem(xPlayer, Config.Items.defib) then
+        TriggerClientEvent('esx:showNotification', xPlayer.source, 'Defibrillator fehlt.')
+        return
+    end
+
+    removeItem(xPlayer, Config.Items.defib)
+
+    local successRoll = math.random(0, 100) / 100
+    local succeeded = successRoll <= Config.Defib.SuccessChance
+
+    TriggerClientEvent('clp_medic:defibResult', xPlayer.source, succeeded)
+
+    if succeeded then
+        TriggerClientEvent('clp_medic:updateEKGState', target, 'stable')
+        TriggerClientEvent('clp_medic:applyEffect', target, 'defib')
+    end
+end
+
 RegisterNetEvent('clp_medic:performTreatment', function(treatment, targetId)
     local src = source
     local xPlayer = ESX.GetPlayerFromId(src)
@@ -75,7 +95,28 @@ RegisterNetEvent('clp_medic:performTreatment', function(treatment, targetId)
         handlePainkillers(xPlayer, targetId)
     elseif treatment == 'ekg' then
         handleEKG(xPlayer, targetId)
+    elseif treatment == 'defib' then
+        handleDefib(xPlayer, targetId)
     end
+end)
+
+-- Added: standalone defib trigger (usable item flow)
+RegisterNetEvent('clp_medic:performDefib', function(targetId)
+    local src = source
+    local xPlayer = ESX.GetPlayerFromId(src)
+    if not xPlayer then return end
+
+    if Config.Compatibility.UseAmbulanceJob and (not xPlayer.job or xPlayer.job.name ~= 'ambulance') then
+        TriggerClientEvent('esx:showNotification', src, 'Du bist nicht berechtigt.')
+        return
+    end
+
+    if not Player(src).state.clp_medic_onDuty then
+        TriggerClientEvent('esx:showNotification', src, 'Du bist nicht im Dienst.')
+        return
+    end
+
+    handleDefib(xPlayer, targetId)
 end)
 
 RegisterNetEvent('clp_medic:returnVitals', function(medicId, vitals)

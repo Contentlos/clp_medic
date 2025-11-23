@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLP Medic - EKG</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <!-- Added: death/injury overlay with EKG monitor -->
+    <div id="overlay" class="hidden">
+        <div class="backdrop"></div>
+        <div class="content">
+            <div class="message">You are critically injured – wait for medical help</div>
+            <div class="ekg">
+                <div class="ekg-line">
+                    <div class="pulse"></div>
+                </div>
+                <div class="state" id="ekg-state">Stable</div>
+            </div>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>

@@ -47,12 +47,16 @@ Config.Items = {
     bandage = 'med_bandage',
     painkillers = 'painkillers',
     ekg = 'med_ekg',
-    adrenaline = 'med_adrenaline'
+    adrenaline = 'med_adrenaline',
+    -- Added: defibrillator item used for advanced revives
+    defib = 'defib'
 }
 
 -- Treatment timings (in milliseconds)
 Config.TreatmentTimes = {
     revive = 8000,
+    -- Added: defibrillator charge time
+    defib = 6000,
     stabilizeLight = 2500,
     stabilizeMedium = 4500,
     stabilizeHeavy = 6500,
@@ -63,10 +67,19 @@ Config.TreatmentTimes = {
 -- Healing values applied by treatments
 Config.HealthAdjust = {
     revive = 200,
+    -- Added: health value used when reviving with the defibrillator
+    defib = 200,
     bandageLight = 20,
     bandageMedium = 35,
     bandageHeavy = 50,
     painkillers = 15
+}
+
+-- Added: defibrillator behavior configuration
+Config.Defib = {
+    SuccessChance = 1.0, -- 1.0 = always succeed, set lower for chance-based revives
+    FailNotify = 'Defibrillation fehlgeschlagen.',
+    SuccessNotify = 'Patient stabilisiert (Defibrillator).'
 }
 
 -- Maximum distance for targeting nearby patients

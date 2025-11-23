@@ -51,4 +51,9 @@ CreateThread(function()
         local src = inventory.id
         TriggerClientEvent('clp_medic:openMedicBag', src)
     end)
+
+    -- Added: register defibrillator usable item
+    exports.ox_inventory:RegisterUsableItem(Config.Items.defib, function(event, item, inventory)
+        TriggerClientEvent('clp_medic:useDefib', inventory.id)
+    end)
 end)

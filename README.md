@@ -5,7 +5,10 @@ Standalone ESX medic system built for ox_target and ox_inventory. Designed to gr
 ## Features
 - On/Off-duty system at configurable duty points (ox_target zones)
 - Revive, stabilize (light/medium/heavy), painkillers, and EKG status checks with animations and progress bars
+- Added: death/injury NUI overlay with animated EKG line and state text (stable/unstable/flatline)
 - Medic bag item that opens a treatment menu for the closest patient
+- Added: defibrillator item for advanced revive attempts with configurable success chance
+- Added: carry interaction to move downed players and put them down again
 - Garage with configurable vehicles, spawns with livery index 4 and all extras enabled by default
 - Simple patient vitals feedback (stable/unstable/critical based on health)
 - No hard dependency on `esx_ambulancejob`; compatibility toggle provided
@@ -13,10 +16,15 @@ Standalone ESX medic system built for ox_target and ox_inventory. Designed to gr
 ## Files
 - `fxmanifest.lua` – resource manifest
 - `config.lua` – all positions, items, vehicles, timing values, and compatibility flags
-- `client/main.lua` – duty handling, player interactions, medic bag flow, vitals
+- `client/main.lua` – duty handling, player interactions, medic bag flow, vitals (resets NUI on revive)
 - `client/garage.lua` – garage target zones and spawn logic (livery 4, extras on)
+- `client/deathscreen.lua` – death screen + EKG overlay control
+- `client/carry.lua` – ox_target player options for carrying/putting down patients
+- `client/defib.lua` – defibrillator item usability and animation
 - `server/main.lua` – duty state tracking, usable medic bag registration
-- `server/medical.lua` – server-side treatment validation and effects
+- `server/medical.lua` – server-side treatment validation and effects (including defib)
+- `server/carry.lua` – carry synchronization
+- `html/` – NUI assets for the death/injury overlay
 
 ## Configuration
 Update `config.lua` to match your server:
@@ -25,6 +33,7 @@ Update `config.lua` to match your server:
 - `Config.Garages` – add more garage zones and vehicles. Each vehicle entry has `model` and `label`.
 - `Config.Items` – change item names to match your ox_inventory items.
 - `Config.TreatmentTimes` / `Config.HealthAdjust` – tune how long treatments take and how much health is restored.
+- `Config.Defib` – success chance + notifications for the defibrillator flow.
 
 ### Adding vehicles
 Append to `Config.Garages[<index>].vehicles`:
@@ -41,14 +50,17 @@ INSERT INTO items (name, label, weight, stack, closeonuse, description) VALUES
   ('med_bandage', 'Bandage', 50, 5, 1, 'Verband für Wunden'),
   ('painkillers', 'Painkillers', 20, 5, 1, 'Schmerzmittel'),
   ('med_ekg', 'Portable EKG', 200, 1, 1, 'Vitalzeichen prüfen'),
-  ('med_adrenaline', 'Adrenaline Shot', 100, 5, 1, 'Erweiterte Wiederbelebung');
+  ('med_adrenaline', 'Adrenaline Shot', 100, 5, 1, 'Erweiterte Wiederbelebung'),
+  ('defib', 'Defibrillator', 500, 1, 1, 'Elektrischer Defibrillator für Revives');
 ```
 
 ## Usage notes
 - Only on-duty medics can use medic interactions and the garage. Duty toggles are defined in `Config.DutyStations`.
 - Medic bag (`Config.Items.medicBag`) is registered as usable; when used, it opens a context menu for the nearest player within `Config.PatientRange`.
-- Treatments consume the relevant item (bandages, painkillers, adrenaline) and apply effects on the target.
-- EKG checks return simple vitals (health number + stable/instable/critical label).
+- Treatments consume the relevant item (bandages, painkillers, adrenaline/defib) and apply effects on the target.
+- Defibrillator (`Config.Items.defib`) uses a short charge animation; success is controlled by `Config.Defib.SuccessChance`.
+- Carry interaction is available on downed players via ox_target; medics can also place the patient down through the stop option.
+- EKG checks return simple vitals (health number + stable/instable/critical label) and update the NUI overlay.
 - Garages use ox_target sphere zones; coordinates (`coords`/`spawn`) and headings can be changed per garage in `config.lua`.
 
 ## Migration tips

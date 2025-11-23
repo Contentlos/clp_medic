@@ -223,6 +223,18 @@ RegisterNetEvent('clp_medic:applyEffect', function(effect)
         SetEntityHealth(ped, Config.HealthAdjust.revive)
         ClearPedBloodDamage(ped)
         ESX.ShowNotification('Du wurdest wiederbelebt.')
+        -- Added: ensure death UI/EKG resets when revived
+        TriggerEvent('clp_medic:updateEKGState', 'stable')
+        TriggerEvent('clp_medic:toggleDeathUI', false, 'stable')
+    elseif effect == 'defib' then
+        local coords = GetEntityCoords(ped)
+        NetworkResurrectLocalPlayer(coords.x, coords.y, coords.z, GetEntityHeading(ped), true, true)
+        SetEntityHealth(ped, Config.HealthAdjust.defib)
+        ClearPedBloodDamage(ped)
+        ESX.ShowNotification('Du wurdest durch Defibrillation belebt.')
+        -- Added: ensure EKG reflects stabilization
+        TriggerEvent('clp_medic:updateEKGState', 'stable')
+        TriggerEvent('clp_medic:toggleDeathUI', false, 'stable')
     elseif effect == 'bandage_light' then
         SetEntityHealth(ped, math.min(200, GetEntityHealth(ped) + Config.HealthAdjust.bandageLight))
         ESX.ShowNotification('Leichte Wunden wurden versorgt.')

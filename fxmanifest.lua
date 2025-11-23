@@ -8,6 +8,8 @@ version '1.0.0'
 
 lua54 'yes'
 
+ui_page 'html/index.html'
+
 shared_scripts {
     '@ox_lib/init.lua',
     'config.lua'
@@ -16,13 +18,20 @@ shared_scripts {
 client_scripts {
     'client/main.lua',
     'client/garage.lua',
-    'client/medical.lua'
+    -- Added: death screen NUI handling
+    'client/deathscreen.lua',
+    -- Added: carry logic
+    'client/carry.lua',
+    -- Added: defibrillator handling
+    'client/defib.lua'
 }
 
 server_scripts {
     '@oxmysql/lib/MySQL.lua',
     'server/main.lua',
-    'server/medical.lua'
+    'server/medical.lua',
+    -- Added: carry synchronization
+    'server/carry.lua'
 }
 
 dependencies {
@@ -30,4 +39,10 @@ dependencies {
     'ox_target',
     'ox_inventory',
     'ox_lib'
+}
+
+files {
+    'html/index.html',
+    'html/style.css',
+    'html/app.js'
 }
