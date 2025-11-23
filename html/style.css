@@ -245,10 +245,73 @@ body, html {
     z-index: 2;
 }
 
+/* NEW: split layout for calls + units */
+.split {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 14px;
+}
+
 .call-list {
     display: flex;
     flex-direction: column;
     gap: 12px;
+}
+
+.unit-panel {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: inset 0 0 24px rgba(63, 222, 255, 0.08);
+}
+
+.panel-title {
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+    color: var(--accent);
+}
+
+.unit-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.unit-controls button {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 6px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.15s ease all;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+
+.unit-controls button:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 16px rgba(61, 244, 255, 0.3);
+}
+
+.unit-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 48vh;
+    overflow: auto;
+}
+
+.unit-card {
+    padding: 10px;
+    border-radius: 10px;
+    background: rgba(8, 12, 24, 0.75);
+    border: 1px solid var(--border);
+    box-shadow: inset 0 0 18px rgba(255, 86, 193, 0.08);
 }
 
 .call-card {

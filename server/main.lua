@@ -20,6 +20,8 @@ local function setDuty(source, state)
     end
     TriggerClientEvent('clp_medic:initialDuty', source, state)
     Player(source).state:set('clp_medic_onDuty', state, true)
+    -- NEW: sync dispatch unit presence
+    TriggerEvent('clp_medic:dispatch:updateUnit', source, state and 'available' or 'off')
 end
 
 RegisterNetEvent('clp_medic:toggleDuty', function()
@@ -63,12 +65,6 @@ CreateThread(function()
     safeRegisterUsableItem(Config.Items.medicBag, function(event, item, inventory)
         local src = inventory.id or source
         TriggerClientEvent('clp_medic:openMedicBag', src)
-    end)
-
-    -- Added: register defibrillator usable item
-    safeRegisterUsableItem(Config.Items.defib, function(event, item, inventory)
-        local src = inventory.id or source
-        TriggerClientEvent('clp_medic:useDefib', src)
     end)
 end)
 

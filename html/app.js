@@ -6,6 +6,7 @@ const distress = document.getElementById('distress');
 const subtext = document.querySelector('.subtext');
 const dispatchWrapper = document.getElementById('dispatch');
 const callList = document.getElementById('call-list');
+const unitList = document.getElementById('unit-list');
 const closeDispatchBtn = document.getElementById('dispatch-close');
 const patientCard = document.getElementById('patient-card');
 const patientStatus = document.getElementById('patient-status');
@@ -76,15 +77,19 @@ function renderCalls(calls = []) {
 
         const assignedUnits = call.assigned ? Object.keys(call.assigned) : [];
 
+        const createdAgo = call.createdAt ? Math.max(0, Math.floor(Date.now() / 1000) - call.createdAt) : 0;
+        const minutes = Math.floor(createdAgo / 60);
+        const seconds = createdAgo % 60;
+
         card.innerHTML = `
             <div class="header">
-                <span>Call #${call.id || '?'} - ${call.reason || 'Dispatch'}</span>
+                <span>Call #${call.id || '?'} - ${call.reason || 'Dispatch'} (P${call.priority || 2})</span>
                 <span class="status">${(call.status || 'waiting').toUpperCase()}</span>
             </div>
-            <div class="meta">Caller: ${call.callerName || 'Unbekannt'} | Coords: ${formatCoords(call.coords)}</div>
+            <div class="meta">Caller: ${call.callerName || 'Unbekannt'} | Coords: ${formatCoords(call.coords)} | ${minutes}m ${seconds}s ago</div>
             <div class="meta">Units: ${assignedUnits.length > 0 ? assignedUnits.join(', ') : 'Unassigned'}</div>
             <div class="actions">
-                <button data-action="dispatch-status" data-id="${call.id}" data-status="assigned">Assign</button>
+                <button data-action="dispatch-status" data-id="${call.id}" data-status="assigned" data-coords='${JSON.stringify(call.coords || {})}'>Assign</button>
                 <button class="secondary" data-action="dispatch-status" data-id="${call.id}" data-status="on_scene">On Scene</button>
                 <button class="danger" data-action="dispatch-status" data-id="${call.id}" data-status="completed">Complete</button>
             </div>
@@ -94,10 +99,26 @@ function renderCalls(calls = []) {
     });
 }
 
-function toggleDispatch(visible, calls) {
+function renderUnits(units = []) {
+    unitList.innerHTML = '';
+    units.forEach((unit) => {
+        const card = document.createElement('div');
+        card.className = 'unit-card';
+        card.innerHTML = `
+            <div class="header">
+                <span>${unit.callsign ? `[${unit.callsign}] ` : ''}${unit.name || 'Unit'}</span>
+                <span class="status">${(unit.status || 'available').toUpperCase()}</span>
+            </div>
+        `;
+        unitList.appendChild(card);
+    });
+}
+
+function toggleDispatch(visible, calls, units) {
     if (visible) {
         dispatchWrapper.classList.remove('hidden');
         renderCalls(calls || []);
+        renderUnits(units || []);
     } else {
         dispatchWrapper.classList.add('hidden');
     }
@@ -128,8 +149,16 @@ window.addEventListener('message', (event) => {
         toggleOverlay(data.visible, data.status, data.panicLabel);
     }
 
-    if (data.action === 'setState') {
+    if (data.action === 'setEKGState') {
         setState(data.status);
+    }
+
+    if (data.action === 'showDeathscreen') {
+        toggleOverlay(true, data.status, data.panicLabel);
+    }
+
+    if (data.action === 'hideDeathscreen') {
+        toggleOverlay(false, data.status, data.panicLabel);
     }
 
     if (data.action === 'dispatchSent') {
@@ -137,11 +166,12 @@ window.addEventListener('message', (event) => {
     }
 
     if (data.action === 'dispatchOpen') {
-        toggleDispatch(true, data.calls || []);
+        toggleDispatch(true, data.calls || [], data.units || []);
     }
 
     if (data.action === 'dispatchUpdate') {
         renderCalls(data.calls || []);
+        renderUnits(data.units || []);
     }
 
     if (data.action === 'dispatchClose') {
@@ -168,9 +198,15 @@ if (closeDispatchBtn) {
 
 document.addEventListener('click', (event) => {
     const target = event.target;
-    if (target && target.dataset && target.dataset.action === 'dispatch-status') {
-        const id = Number(target.dataset.id);
-        const status = target.dataset.status;
-        nui('dispatchStatus', { id, status });
+    if (target && target.dataset) {
+        if (target.dataset.action === 'dispatch-status') {
+            const id = Number(target.dataset.id);
+            const status = target.dataset.status;
+            const coords = target.dataset.coords ? JSON.parse(target.dataset.coords) : null;
+            nui('dispatchStatus', { id, status, coords });
+        }
+        if (target.dataset.action === 'unit-status') {
+            nui('unitStatus', { status: target.dataset.status });
+        }
     }
 });

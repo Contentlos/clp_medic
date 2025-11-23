@@ -18,6 +18,7 @@ local function stopCarry()
     carrying = false
     carriedTargetId = nil
     ClearPedTasks(PlayerPedId())
+    StopMedicAnim()
     LocalPlayer.state:set('clp_medic_carrying', false, true)
 end
 
@@ -35,10 +36,7 @@ RegisterNetEvent('clp_medic:carryTarget', function(targetId)
     carriedTargetId = targetId
     LocalPlayer.state:set('clp_medic_carrying', true, true)
 
-    local dict = 'missfinale_c2mcs_1'
-    local clip = 'fin_c2_mcs_1_camman'
-    loadAnimDict(dict)
-    TaskPlayAnim(PlayerPedId(), dict, clip, 8.0, -8.0, -1, 49, 0, false, false, false)
+    PlayCarryAnim()
 end)
 
 -- Added: target gets attached/detached to carrier

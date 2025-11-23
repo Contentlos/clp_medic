@@ -4,6 +4,7 @@ local ESX = exports['es_extended']:getSharedObject()
 local dispatchCalls = {}
 local callIndexByPlayer = {}
 local nextCallId = 1
+local emsUnits = {}
 
 local function isAllowedJob(src)
     if not Config.Compatibility.UseAmbulanceJob then return true end
@@ -11,6 +12,16 @@ local function isAllowedJob(src)
     if not xPlayer or not xPlayer.job then return false end
     for _, job in ipairs(Config.AllowedJobs) do
         if xPlayer.job.name == job then
+            return true
+        end
+    end
+    return false
+end
+
+local function gradeAllowed(xPlayer, list)
+    if not list or #list == 0 then return true end
+    for _, grade in ipairs(list) do
+        if xPlayer.job and xPlayer.job.grade == grade then
             return true
         end
     end
@@ -34,12 +45,22 @@ local function serializeCalls()
     return list
 end
 
+local function serializeUnits()
+    local list = {}
+    for src, unit in pairs(emsUnits) do
+        list[#list+1] = unit
+    end
+    table.sort(list, function(a, b) return a.name < b.name end)
+    return list
+end
+
 local function broadcastCalls()
     local payload = serializeCalls()
+    local units = serializeUnits()
     for _, xPlayer in pairs(ESX.GetExtendedPlayers()) do
         local src = xPlayer.source
         if canAccessDispatch(src) then
-            TriggerClientEvent('clp_medic:dispatch:update', src, payload)
+            TriggerClientEvent('clp_medic:dispatch:update', src, payload, units)
         end
     end
 end
@@ -67,7 +88,9 @@ local function createCall(src, coords, reason)
         coords = coords,
         reason = reason or 'Medizinischer Notruf',
         status = 'waiting',
-        assigned = {}
+        assigned = {},
+        priority = Config.Dispatch.DefaultPriority or 2,
+        createdAt = os.time()
     }
 
     dispatchCalls[id] = callData
@@ -98,13 +121,25 @@ RegisterNetEvent('clp_medic:dispatch:request', function()
         return
     end
 
-    TriggerClientEvent('clp_medic:dispatch:setCalls', src, serializeCalls())
+    local xPlayer = ESX.GetPlayerFromId(src)
+    if not gradeAllowed(xPlayer, Config.Ranks.DispatchControl) then
+        TriggerClientEvent('esx:showNotification', src, 'Keine Berechtigung für Leitstelle.')
+        return
+    end
+
+    TriggerClientEvent('clp_medic:dispatch:setCalls', src, serializeCalls(), serializeUnits())
 end)
 
 RegisterNetEvent('clp_medic:dispatch:updateStatus', function(callId, status)
     local src = source
     if not canAccessDispatch(src) then
         TriggerClientEvent('esx:showNotification', src, 'Kein Zugriff auf die Leitstelle.')
+        return
+    end
+
+    local xPlayer = ESX.GetPlayerFromId(src)
+    if not gradeAllowed(xPlayer, Config.Ranks.DispatchControl) then
+        TriggerClientEvent('esx:showNotification', src, 'Keine Berechtigung für Leitstelle.')
         return
     end
     updateCallStatus(src, callId, status)
@@ -145,6 +180,34 @@ RegisterNetEvent('clp_medic:playerRevived', function()
         updateCallStatus(nil, callId, 'completed')
         callIndexByPlayer[src] = nil
     end
+end)
+
+-- NEW: unit status sync (tablet self-update)
+RegisterNetEvent('clp_medic:dispatch:setUnitStatus', function(status)
+    local src = source
+    if not canAccessDispatch(src) then return end
+    local unit = emsUnits[src]
+    if unit then
+        unit.status = status
+        broadcastCalls()
+    end
+end)
+
+-- NEW: track duty on/off
+AddEventHandler('clp_medic:dispatch:updateUnit', function(src, status)
+    if not src then return end
+    if status == 'off' then
+        emsUnits[src] = nil
+    else
+        local xPlayer = ESX.GetPlayerFromId(src)
+        emsUnits[src] = {
+            id = src,
+            name = xPlayer and xPlayer.getName() or ('Unit %s'):format(src),
+            callsign = xPlayer and xPlayer.metadata and xPlayer.metadata.callsign or nil,
+            status = status or 'available'
+        }
+    end
+    broadcastCalls()
 end)
 
 -- Command-based dispatch creation

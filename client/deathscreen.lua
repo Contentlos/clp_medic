@@ -13,8 +13,7 @@ local function toggleDeathUI(state, ekgState)
     currentState = ekgState or currentState
     SetNuiFocus(false, false)
     sendUI({
-        action = 'toggle',
-        visible = state,
+        action = state and 'showDeathscreen' or 'hideDeathscreen',
         status = currentState,
         panicKey = Config.Dispatch.PanicKey,
         panicLabel = Config.Dispatch.PanicKeyLabel
@@ -25,7 +24,7 @@ end
 local function updateEKGState(state)
     currentState = state or currentState
     sendUI({
-        action = 'setState',
+        action = 'setEKGState',
         status = currentState
     })
 end

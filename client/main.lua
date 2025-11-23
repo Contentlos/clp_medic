@@ -105,6 +105,18 @@ exports.ox_target:addGlobalPlayer({
             TriggerEvent('clp_medic:handleTreatment', 'revive', data.entity)
         end
     },
+    -- NEW: defibrillator tool (not an inventory use)
+    {
+        name = 'clp_medic:defib',
+        icon = 'fa-solid fa-bolt',
+        label = 'Defibrillieren',
+        canInteract = function(entity)
+            return canUseMedicActions() and isPedDowned(entity)
+        end,
+        onSelect = function(data)
+            TriggerEvent('clp_medic:handleTreatment', 'defib', data.entity, false)
+        end
+    },
     -- NEW: healing option for injured but alive players
     {
         name = 'clp_medic:heal',
@@ -159,6 +171,8 @@ RegisterNetEvent('clp_medic:openMedicBag', function()
             { title = 'Revive', description = 'Adrenalin einsetzen, um einen Patienten zu beleben', event = 'clp_medic:startBagAction', args = { type = 'revive', target = playerId, fromBag = true } },
             -- NEW: healing action for conscious patients
             { title = 'Heilen', description = 'Patienten ohne Bewusstlosigkeit versorgen', event = 'clp_medic:startBagAction', args = { type = 'heal', target = playerId, fromBag = true } },
+            -- NEW: defibrillator via bag (tool-based, not consumed)
+            { title = 'Defibrillator', description = 'Defibrillation bei bewusstlosen Patienten', event = 'clp_medic:startBagAction', args = { type = 'defib', target = playerId, fromBag = true } },
             { title = 'Bandage - leicht', description = 'Kleine Verletzungen versorgen', event = 'clp_medic:startBagAction', args = { type = 'bandage_light', target = playerId, fromBag = true } },
             { title = 'Bandage - mittel', description = 'Mittlere Verletzungen versorgen', event = 'clp_medic:startBagAction', args = { type = 'bandage_medium', target = playerId, fromBag = true } },
             { title = 'Bandage - schwer', description = 'Schwere Verletzungen versorgen', event = 'clp_medic:startBagAction', args = { type = 'bandage_heavy', target = playerId, fromBag = true } },
@@ -196,44 +210,57 @@ RegisterNetEvent('clp_medic:handleTreatment', function(treatment, entity, fromBa
         ESX.ShowNotification('Kein Patient ausgewählt.', 'error')
         return
     end
-
-    local animDict = 'anim@amb@clubhouse@tutorial@bkr_tut_ig3@'
-    local anim = 'machinic_loop_mechandplayer'
-    RequestAnimDict(animDict)
-    while not HasAnimDictLoaded(animDict) do
-        Wait(10)
+    -- NEW: defib handled in dedicated module
+    if treatment == 'defib' then
+        TriggerEvent('clp_medic:startDefib', targetId, fromBag)
+        return
     end
 
     local duration = Config.TreatmentTimes.stabilizeLight
+    local label = 'Behandlung läuft...'
+    local animPreset = 'Bandage'
+
     if treatment == 'revive' then
         duration = Config.TreatmentTimes.revive
+        label = 'Reanimation...'
+        animPreset = 'CPR2'
     elseif treatment == 'heal' then
         duration = Config.TreatmentTimes.heal
+        label = 'Heilen...'
+        animPreset = 'Bandage'
     elseif treatment == 'ekg' then
         duration = Config.TreatmentTimes.ekg
+        label = 'EKG prüfen...'
+        animPreset = 'Vitals'
     elseif treatment == 'bandage' or treatment == 'bandage_light' then
         duration = Config.TreatmentTimes.stabilizeLight
+        label = 'Bandagieren...'
+        animPreset = 'Bandage'
     elseif treatment == 'bandage_medium' then
         duration = Config.TreatmentTimes.stabilizeMedium
+        label = 'Bandage anlegen...'
+        animPreset = 'Bandage'
     elseif treatment == 'bandage_heavy' then
         duration = Config.TreatmentTimes.stabilizeHeavy
+        label = 'Schwere Bandage...'
+        animPreset = 'Bandage'
     elseif treatment == 'painkillers' then
         duration = Config.TreatmentTimes.painkillers
+        label = 'Medikation verabreichen...'
+        animPreset = 'Bag'
     end
+
+    PlayMedicAnim(animPreset, duration)
 
     local success = lib.progressCircle({
         duration = duration,
         position = 'bottom',
-        label = 'Behandlung läuft...',
+        label = label,
         useWhileDead = false,
-        canCancel = true,
-        anim = {
-            dict = animDict,
-            clip = anim
-        }
+        canCancel = true
     })
 
-    ClearPedTasks(PlayerPedId())
+    StopMedicAnim()
     if not success then return end
 
     TriggerServerEvent('clp_medic:performTreatment', treatment, targetId, fromBag)

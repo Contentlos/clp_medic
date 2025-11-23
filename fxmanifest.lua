@@ -16,6 +16,7 @@ shared_scripts {
 }
 
 client_scripts {
+    'client/animations.lua', -- NEW: shared animation helpers
     'client/main.lua',
     'client/garage.lua',
     -- Added: death screen NUI handling
@@ -25,7 +26,9 @@ client_scripts {
     -- Added: defibrillator handling
     'client/defib.lua',
     -- NEW: dispatch tablet/client sync
-    'client/dispatch.lua'
+    'client/dispatch.lua',
+    -- NEW: hospital beds + locker logic
+    'client/beds.lua'
 }
 
 server_scripts {
@@ -35,7 +38,9 @@ server_scripts {
     -- Added: carry synchronization
     'server/carry.lua',
     -- NEW: dispatch state + routing
-    'server/dispatch.lua'
+    'server/dispatch.lua',
+    -- NEW: hospital beds + locker/billing helpers
+    'server/beds.lua'
 }
 
 dependencies {

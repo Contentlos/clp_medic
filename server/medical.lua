@@ -115,21 +115,24 @@ local function handleHeal(xPlayer, target, fromBag)
     TriggerClientEvent('clp_medic:applyEffect', target, 'heal')
 end
 
--- Added: defibrillator revive
-local function handleDefib(xPlayer, target)
+-- Added: defibrillator revive (tool-based)
+local function handleDefib(xPlayer, target, fromBag)
     if not isTargetDowned(target) then
         TriggerClientEvent('esx:showNotification', xPlayer.source, 'Defibrillator nur bei bewusstlosen Patienten möglich.')
         return
     end
 
-    if not ensureSupply(xPlayer, Config.Items.defib, false, 'Defibrillator fehlt.') then
-        return
-    end
+    if Config.Defib.RequiresItem then
+        if Config.Defib.AllowWithBag and hasItem(xPlayer, Config.Items.medicBag) then
+            -- bag counts as equipment
+        elseif not hasItem(xPlayer, Config.Items.defib) then
+            TriggerClientEvent('esx:showNotification', xPlayer.source, 'Defibrillator fehlt.')
+            return
+        end
 
-    local removed = removeItem(xPlayer, Config.Items.defib)
-    if not removed then
-        TriggerClientEvent('esx:showNotification', xPlayer.source, 'Defibrillator konnte nicht genutzt werden.', 'error')
-        return
+        if Config.Defib.ConsumeOnUse then
+            removeItem(xPlayer, Config.Items.defib)
+        end
     end
 
     local successRoll = math.random(0, 100) / 100
@@ -173,27 +176,8 @@ RegisterNetEvent('clp_medic:performTreatment', function(treatment, targetId, fro
     elseif treatment == 'ekg' then
         handleEKG(xPlayer, targetId)
     elseif treatment == 'defib' then
-        handleDefib(xPlayer, targetId)
+        handleDefib(xPlayer, targetId, fromBag)
     end
-end)
-
--- Added: standalone defib trigger (usable item flow)
-RegisterNetEvent('clp_medic:performDefib', function(targetId)
-    local src = source
-    local xPlayer = ESX.GetPlayerFromId(src)
-    if not xPlayer then return end
-
-    if not isAllowedJob(xPlayer) then
-        TriggerClientEvent('esx:showNotification', src, 'Du bist nicht berechtigt.')
-        return
-    end
-
-    if not Player(src).state.clp_medic_onDuty then
-        TriggerClientEvent('esx:showNotification', src, 'Du bist nicht im Dienst.')
-        return
-    end
-
-    handleDefib(xPlayer, targetId)
 end)
 
 RegisterNetEvent('clp_medic:returnVitals', function(medicId, vitals)

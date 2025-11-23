@@ -1,58 +1,55 @@
--- Added: defibrillator handling
+-- Added: defibrillator handling (tool-based)
 local ESX = exports['es_extended']:getSharedObject()
 
-local function getClosestPlayer()
-    local closestPlayer, distance = ESX.Game.GetClosestPlayer()
-    if closestPlayer ~= -1 and distance <= Config.PatientRange then
-        return GetPlayerServerId(closestPlayer)
+local function isAllowedJob()
+    if not Config.Compatibility.UseAmbulanceJob then return true end
+    local playerData = ESX.GetPlayerData()
+    if playerData and playerData.job then
+        for _, job in ipairs(Config.AllowedJobs) do
+            if playerData.job.name == job then
+                return true
+            end
+        end
     end
-    return nil
+    return false
 end
 
-RegisterNetEvent('clp_medic:useDefib', function()
-    if not LocalPlayer.state.clp_medic_onDuty then
+RegisterNetEvent('clp_medic:startDefib', function(targetId, fromBag)
+    if not LocalPlayer.state.clp_medic_onDuty or not isAllowedJob() then
         ESX.ShowNotification('Du bist nicht im Dienst.', 'error')
         return
     end
 
-    local targetId = getClosestPlayer()
-    if not targetId then
+    local targetIdx = GetPlayerFromServerId(targetId)
+    if targetIdx == -1 then
         ESX.ShowNotification('Kein Patient in der Nähe.', 'error')
         return
     end
 
-    local targetIdx = GetPlayerFromServerId(targetId)
-    if targetIdx == -1 or not IsPedDeadOrDying(GetPlayerPed(targetIdx), true) then
+    local targetPed = GetPlayerPed(targetIdx)
+    if not IsPedDeadOrDying(targetPed, true) then
         ESX.ShowNotification('Defibrillator nur bei bewusstlosen Patienten verwenden.', 'error')
         return
     end
 
-    local animDict = 'mini@cpr@char_a@cpr_str'
-    local anim = 'cpr_pumpchest'
-    RequestAnimDict(animDict)
-    while not HasAnimDictLoaded(animDict) do
-        Wait(0)
-    end
-
+    PlayCPR2Anim(Config.TreatmentTimes.defib)
     local success = lib.progressCircle({
         duration = Config.TreatmentTimes.defib,
         position = 'bottom',
         label = 'Defibrillator aufladen...',
         useWhileDead = false,
-        canCancel = true,
-        anim = {
-            dict = animDict,
-            clip = anim
-        }
+        canCancel = true
     })
+    StopMedicAnim()
 
-    ClearPedTasks(PlayerPedId())
     if not success then return end
 
-    -- NEW: follow-up CPR push to keep animation running while server validates
-    TaskPlayAnim(PlayerPedId(), animDict, anim, 8.0, -8.0, 2500, 48, 0, false, false, false)
+    -- follow-up CPR pumping to sell the shock
+    PlayCPRPumpAnim(2500)
+    Wait(2500)
+    StopMedicAnim()
 
-    TriggerServerEvent('clp_medic:performDefib', targetId)
+    TriggerServerEvent('clp_medic:performTreatment', 'defib', targetId, fromBag)
 end)
 
 -- Added: feedback for the medic

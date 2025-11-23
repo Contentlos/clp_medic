@@ -23,7 +23,7 @@ local function canAccessDispatch()
     return true
 end
 
-local function openTablet(calls)
+local function openTablet(calls, units)
     if not canAccessDispatch() then
         ESX.ShowNotification('Kein Zugriff auf die Leitstelle.', 'error')
         return
@@ -31,15 +31,18 @@ local function openTablet(calls)
 
     tabletOpen = true
     SetNuiFocus(true, true)
+    PlayTabletAnim(-1)
     SendNUIMessage({
         action = 'dispatchOpen',
-        calls = calls or {}
+        calls = calls or {},
+        units = units or {}
     })
 end
 
 local function closeTablet()
     tabletOpen = false
     SetNuiFocus(false, false)
+    StopMedicAnim()
     SendNUIMessage({ action = 'dispatchClose' })
 end
 
@@ -51,17 +54,28 @@ end)
 RegisterNUICallback('dispatchStatus', function(data, cb)
     if data and data.id then
         TriggerServerEvent('clp_medic:dispatch:updateStatus', data.id, data.status or 'assigned')
+        if data.status == 'assigned' and data.coords and Config.Dispatch.SetWaypointOnAccept then
+            SetNewWaypoint(data.coords.x or 0.0, data.coords.y or 0.0)
+        end
     end
     cb('ok')
 end)
 
-RegisterNetEvent('clp_medic:dispatch:setCalls', function(calls)
-    openTablet(calls)
+-- NEW: unit self-status change
+RegisterNUICallback('unitStatus', function(data, cb)
+    if data and data.status then
+        TriggerServerEvent('clp_medic:dispatch:setUnitStatus', data.status)
+    end
+    cb('ok')
 end)
 
-RegisterNetEvent('clp_medic:dispatch:update', function(calls)
+RegisterNetEvent('clp_medic:dispatch:setCalls', function(calls, units)
+    openTablet(calls, units)
+end)
+
+RegisterNetEvent('clp_medic:dispatch:update', function(calls, units)
     if tabletOpen then
-        SendNUIMessage({ action = 'dispatchUpdate', calls = calls or {} })
+        SendNUIMessage({ action = 'dispatchUpdate', calls = calls or {}, units = units or {} })
     end
 end)
 
