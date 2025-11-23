@@ -1,16 +1,16 @@
 /* Cyberpunk-inspired overlay + dispatch tablet */
 :root {
-    --overlay-bg: radial-gradient(circle at 20% 20%, rgba(0,255,200,0.08), transparent 45%),
-                  radial-gradient(circle at 80% 30%, rgba(255,0,120,0.08), transparent 40%),
-                  rgba(5, 8, 20, 0.9);
-    --accent: #16f2d1;
-    --accent-2: #ff3fa4;
+    --overlay-bg: radial-gradient(circle at 20% 20%, rgba(0,255,200,0.14), transparent 45%),
+                  radial-gradient(circle at 80% 30%, rgba(255,0,180,0.14), transparent 40%),
+                  rgba(4, 6, 14, 0.82);
+    --accent: #3df4ff;
+    --accent-2: #ff56c1;
     --warning: #ff6868;
     --text: #e5e7eb;
     --muted: #9ca3af;
-    --glass: rgba(10, 15, 32, 0.75);
-    --border: rgba(255,255,255,0.08);
-    --glow: 0 0 16px rgba(22, 242, 209, 0.6);
+    --glass: rgba(10, 15, 32, 0.6);
+    --border: rgba(255,255,255,0.14);
+    --glow: 0 0 26px rgba(61, 244, 255, 0.55);
 }
 
 body, html {
@@ -65,10 +65,11 @@ body, html {
     color: var(--text);
     padding: 32px 52px;
     border-radius: 14px;
-    background: var(--glass);
+    background: rgba(5, 8, 20, 0.68);
     border: 1px solid var(--border);
-    box-shadow: var(--glow), 0 28px 80px rgba(0,0,0,0.55);
+    box-shadow: var(--glow), 0 28px 80px rgba(0,0,0,0.65);
     min-width: 520px;
+    backdrop-filter: blur(6px);
 }
 
 .badge {
@@ -77,8 +78,8 @@ body, html {
     gap: 8px;
     padding: 6px 12px;
     border-radius: 999px;
-    border: 1px solid rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.08);
     letter-spacing: 0.08em;
     font-weight: 700;
     color: var(--accent);
@@ -103,7 +104,7 @@ body, html {
     width: 100%;
     height: 90px;
     overflow: hidden;
-    background: linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.08));
+    background: linear-gradient(90deg, rgba(255,255,255,0.04), rgba(61,244,255,0.15));
     border-radius: 10px;
     border: 1px solid var(--border);
 }
@@ -133,8 +134,8 @@ body, html {
     margin-top: 16px;
     padding: 10px 14px;
     border-radius: 10px;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.14);
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -174,20 +175,20 @@ body, html {
     display: flex;
     justify-content: center;
     align-items: center;
-    background: rgba(0, 0, 0, 0.55);
-    backdrop-filter: blur(6px);
+    background: linear-gradient(135deg, rgba(0,0,0,0.45), rgba(20,10,25,0.55));
+    backdrop-filter: blur(12px);
     z-index: 5;
 }
 
 .tablet {
     position: relative;
-    background: linear-gradient(135deg, rgba(10,14,30,0.95), rgba(7,10,26,0.92));
+    background: linear-gradient(135deg, rgba(10,14,30,0.75), rgba(7,10,26,0.72));
     color: var(--text);
-    width: 680px;
+    width: 720px;
     max-height: 82vh;
-    border-radius: 16px;
+    border-radius: 18px;
     border: 1px solid var(--border);
-    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55), var(--glow);
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.65), var(--glow);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -196,9 +197,10 @@ body, html {
 .tablet-glow {
     position: absolute;
     inset: 0;
-    background: linear-gradient(120deg, rgba(22,242,209,0.12), transparent 40%),
-                linear-gradient(300deg, rgba(255,63,164,0.12), transparent 35%);
-    filter: blur(30px);
+    background: linear-gradient(120deg, rgba(61,244,255,0.18), transparent 40%),
+                linear-gradient(300deg, rgba(255,86,193,0.18), transparent 35%),
+                linear-gradient(45deg, rgba(0,120,255,0.16), transparent 50%);
+    filter: blur(34px);
     pointer-events: none;
 }
 
@@ -207,7 +209,7 @@ body, html {
     justify-content: space-between;
     align-items: center;
     padding: 16px 20px;
-    background: rgba(255,255,255,0.03);
+    background: rgba(255,255,255,0.05);
     border-bottom: 1px solid var(--border);
     position: relative;
     z-index: 2;
@@ -238,7 +240,7 @@ body, html {
 .tablet-body {
     padding: 16px;
     overflow-y: auto;
-    background: rgba(255,255,255,0.015);
+    background: rgba(255,255,255,0.02);
     position: relative;
     z-index: 2;
 }
@@ -303,4 +305,57 @@ body, html {
 /* Dispatch alert pulse */
 #dispatch.flash .tablet {
     box-shadow: 0 0 20px rgba(255,63,164,0.55), var(--glow);
+}
+
+/* NEW: compact patient overlay */
+#patient-card {
+    position: absolute;
+    bottom: 4%;
+    right: 3%;
+    width: 260px;
+    color: var(--text);
+    font-family: 'Roboto', sans-serif;
+    z-index: 6;
+}
+
+#patient-card .holo {
+    position: absolute;
+    inset: -12px;
+    background: linear-gradient(135deg, rgba(61,244,255,0.3), transparent 40%),
+                linear-gradient(225deg, rgba(255,86,193,0.28), transparent 45%);
+    filter: blur(24px);
+    pointer-events: none;
+}
+
+#patient-card .card-body {
+    position: relative;
+    background: rgba(7, 12, 28, 0.78);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.5), var(--glow);
+    backdrop-filter: blur(6px);
+}
+
+#patient-card .label {
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+    margin-bottom: 6px;
+}
+
+#patient-card .readout {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 800;
+}
+
+#patient-card .stat {
+    color: var(--accent-2);
+    text-transform: uppercase;
+}
+
+#patient-card .heart {
+    color: var(--accent);
 }

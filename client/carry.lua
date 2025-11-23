@@ -75,7 +75,11 @@ exports.ox_target:addGlobalPlayer({
         canInteract = function(entity)
             if not LocalPlayer.state.clp_medic_onDuty then return false end
             if LocalPlayer.state.clp_medic_carrying then return false end
-            return IsPedDeadOrDying(entity, true)
+
+            local targetId = GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity))
+            local targetState = targetId and Player(targetId) and Player(targetId).state
+            local downed = IsPedDeadOrDying(entity, true) or (targetState and targetState.clp_medic_downed)
+            return downed
         end,
         onSelect = function(data)
             local targetId = GetPlayerServerId(NetworkGetPlayerIndexFromPed(data.entity))

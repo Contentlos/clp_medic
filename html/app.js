@@ -7,6 +7,9 @@ const subtext = document.querySelector('.subtext');
 const dispatchWrapper = document.getElementById('dispatch');
 const callList = document.getElementById('call-list');
 const closeDispatchBtn = document.getElementById('dispatch-close');
+const patientCard = document.getElementById('patient-card');
+const patientStatus = document.getElementById('patient-status');
+const patientHeart = document.getElementById('patient-heart');
 
 const defaultDistressText = distress ? distress.innerHTML : '';
 const defaultSubtext = subtext ? subtext.textContent : '';
@@ -101,6 +104,16 @@ function toggleDispatch(visible, calls) {
     dispatchWrapper.classList.remove('flash');
 }
 
+function togglePatientCard(visible, status, heart) {
+    if (visible) {
+        patientCard.classList.remove('hidden');
+        patientStatus.textContent = status || '--';
+        patientHeart.textContent = heart ? `${heart} bpm` : '--';
+    } else {
+        patientCard.classList.add('hidden');
+    }
+}
+
 function nui(eventName, data = {}) {
     fetch(`https://clp_medic/${eventName}`, {
         method: 'POST',
@@ -139,6 +152,10 @@ window.addEventListener('message', (event) => {
         dispatchWrapper.classList.remove('flash');
         void dispatchWrapper.offsetWidth; // restart animation/class
         dispatchWrapper.classList.add('flash');
+    }
+
+    if (data.action === 'patientOverlay') {
+        togglePatientCard(data.visible, data.status, data.heart);
     }
 });
 

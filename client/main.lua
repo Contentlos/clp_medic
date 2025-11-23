@@ -156,14 +156,14 @@ RegisterNetEvent('clp_medic:openMedicBag', function()
         id = 'clp_medic:bag_menu',
         title = 'Medic Bag',
         options = {
-            { title = 'Revive', description = 'Adrenalin einsetzen, um einen Patienten zu beleben', event = 'clp_medic:startBagAction', args = { type = 'revive', target = playerId } },
+            { title = 'Revive', description = 'Adrenalin einsetzen, um einen Patienten zu beleben', event = 'clp_medic:startBagAction', args = { type = 'revive', target = playerId, fromBag = true } },
             -- NEW: healing action for conscious patients
-            { title = 'Heilen', description = 'Patienten ohne Bewusstlosigkeit versorgen', event = 'clp_medic:startBagAction', args = { type = 'heal', target = playerId } },
-            { title = 'Bandage - leicht', description = 'Kleine Verletzungen versorgen', event = 'clp_medic:startBagAction', args = { type = 'bandage_light', target = playerId } },
-            { title = 'Bandage - mittel', description = 'Mittlere Verletzungen versorgen', event = 'clp_medic:startBagAction', args = { type = 'bandage_medium', target = playerId } },
-            { title = 'Bandage - schwer', description = 'Schwere Verletzungen versorgen', event = 'clp_medic:startBagAction', args = { type = 'bandage_heavy', target = playerId } },
-            { title = 'Painkillers', description = 'Schmerzmittel verabreichen', event = 'clp_medic:startBagAction', args = { type = 'painkillers', target = playerId } },
-            { title = 'EKG Check', description = 'Herzrhythmus prüfen', event = 'clp_medic:startBagAction', args = { type = 'ekg', target = playerId } }
+            { title = 'Heilen', description = 'Patienten ohne Bewusstlosigkeit versorgen', event = 'clp_medic:startBagAction', args = { type = 'heal', target = playerId, fromBag = true } },
+            { title = 'Bandage - leicht', description = 'Kleine Verletzungen versorgen', event = 'clp_medic:startBagAction', args = { type = 'bandage_light', target = playerId, fromBag = true } },
+            { title = 'Bandage - mittel', description = 'Mittlere Verletzungen versorgen', event = 'clp_medic:startBagAction', args = { type = 'bandage_medium', target = playerId, fromBag = true } },
+            { title = 'Bandage - schwer', description = 'Schwere Verletzungen versorgen', event = 'clp_medic:startBagAction', args = { type = 'bandage_heavy', target = playerId, fromBag = true } },
+            { title = 'Painkillers', description = 'Schmerzmittel verabreichen', event = 'clp_medic:startBagAction', args = { type = 'painkillers', target = playerId, fromBag = true } },
+            { title = 'EKG Check', description = 'Herzrhythmus prüfen', event = 'clp_medic:startBagAction', args = { type = 'ekg', target = playerId, fromBag = true } }
         }
     })
 
@@ -171,11 +171,11 @@ RegisterNetEvent('clp_medic:openMedicBag', function()
 end)
 
 RegisterNetEvent('clp_medic:startBagAction', function(data)
-    TriggerEvent('clp_medic:handleTreatment', data.type, data.target)
+    TriggerEvent('clp_medic:handleTreatment', data.type, data.target, true)
 end)
 
 -- Client-side handler for starting treatments
-RegisterNetEvent('clp_medic:handleTreatment', function(treatment, entity)
+RegisterNetEvent('clp_medic:handleTreatment', function(treatment, entity, fromBag)
     if not canUseMedicActions() then
         ESX.ShowNotification('Du bist nicht im Dienst.', 'error')
         return
@@ -236,7 +236,7 @@ RegisterNetEvent('clp_medic:handleTreatment', function(treatment, entity)
     ClearPedTasks(PlayerPedId())
     if not success then return end
 
-    TriggerServerEvent('clp_medic:performTreatment', treatment, targetId)
+    TriggerServerEvent('clp_medic:performTreatment', treatment, targetId, fromBag)
 end)
 
 -- Client-side revival/healing applied to the patient
@@ -301,6 +301,16 @@ end)
 
 RegisterNetEvent('clp_medic:receiveVitals', function(data)
     ESX.ShowNotification(('Patientenstatus: %s | Herzfrequenz: ~b~%s~s~'):format(data.status, data.health))
+    -- NEW: project a small cyber overlay for the medic while nearby
+    SendNUIMessage({
+        action = 'patientOverlay',
+        visible = true,
+        status = data.status,
+        heart = data.health
+    })
+    SetTimeout(4500, function()
+        SendNUIMessage({ action = 'patientOverlay', visible = false })
+    end)
 end)
 
 -- Init notification for duty state when joining

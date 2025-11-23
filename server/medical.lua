@@ -21,52 +21,73 @@ local function hasItem(xPlayer, item)
     return (count or 0) > 0
 end
 
+-- NEW: remove item and return success
 local function removeItem(xPlayer, item)
-    exports.ox_inventory:RemoveItem(xPlayer.source, item, 1)
+    local removed = exports.ox_inventory:RemoveItem(xPlayer.source, item, 1)
+    if removed == nil then return false end
+    if type(removed) == 'boolean' then return removed end
+    return removed > 0
 end
 
-local function handleRevive(xPlayer, target)
+-- NEW: supply helper to let medic bags act as a portable kit
+local function ensureSupply(xPlayer, item, fromBag, missingMessage)
+    if fromBag then
+        if hasItem(xPlayer, Config.Items.medicBag) then return true end
+        TriggerClientEvent('esx:showNotification', xPlayer.source, 'Dir fehlt die Medic Bag.', 'error')
+        return false
+    end
+
+    if not hasItem(xPlayer, item) then
+        TriggerClientEvent('esx:showNotification', xPlayer.source, missingMessage or 'Material fehlt.')
+        return false
+    end
+    return true
+end
+
+local function consumeSupply(xPlayer, item, fromBag)
+    if fromBag then return end -- medic bag stays as reusable kit
+    removeItem(xPlayer, item)
+end
+
+local function handleRevive(xPlayer, target, fromBag)
     if not isTargetDowned(target) then
         TriggerClientEvent('esx:showNotification', xPlayer.source, 'Patient ist nicht bewusstlos (Revive nicht möglich).')
         return
     end
 
-    if not hasItem(xPlayer, Config.Items.adrenaline) then
-        TriggerClientEvent('esx:showNotification', xPlayer.source, 'Dir fehlt Adrenalin / Advanced Revive.')
+    if not ensureSupply(xPlayer, Config.Items.adrenaline, fromBag, 'Dir fehlt Adrenalin / Advanced Revive.') then
         return
     end
 
-    removeItem(xPlayer, Config.Items.adrenaline)
+    consumeSupply(xPlayer, Config.Items.adrenaline, fromBag)
     TriggerClientEvent('clp_medic:applyEffect', target, 'revive')
 end
 
-local function handleBandage(xPlayer, target, tier)
+local function handleBandage(xPlayer, target, tier, fromBag)
     if isTargetDowned(target) then
         TriggerClientEvent('esx:showNotification', xPlayer.source, 'Nutze Revive/Defib bei bewusstlosen Patienten.')
         return
     end
 
-    if not hasItem(xPlayer, Config.Items.bandage) then
-        TriggerClientEvent('esx:showNotification', xPlayer.source, 'Keine Bandagen dabei.')
+    if not ensureSupply(xPlayer, Config.Items.bandage, fromBag, 'Keine Bandagen dabei.') then
         return
     end
 
-    removeItem(xPlayer, Config.Items.bandage)
+    consumeSupply(xPlayer, Config.Items.bandage, fromBag)
     TriggerClientEvent('clp_medic:applyEffect', target, ('bandage_%s'):format(tier))
 end
 
-local function handlePainkillers(xPlayer, target)
+local function handlePainkillers(xPlayer, target, fromBag)
     if isTargetDowned(target) then
         TriggerClientEvent('esx:showNotification', xPlayer.source, 'Patient ist bewusstlos, nutze Revive/Defib.')
         return
     end
 
-    if not hasItem(xPlayer, Config.Items.painkillers) then
-        TriggerClientEvent('esx:showNotification', xPlayer.source, 'Keine Schmerzmittel dabei.')
+    if not ensureSupply(xPlayer, Config.Items.painkillers, fromBag, 'Keine Schmerzmittel dabei.') then
         return
     end
 
-    removeItem(xPlayer, Config.Items.painkillers)
+    consumeSupply(xPlayer, Config.Items.painkillers, fromBag)
     TriggerClientEvent('clp_medic:applyEffect', target, 'painkillers')
 end
 
@@ -80,18 +101,17 @@ local function handleEKG(xPlayer, target)
 end
 
 -- NEW: healing flow (injured but alive patients)
-local function handleHeal(xPlayer, target)
+local function handleHeal(xPlayer, target, fromBag)
     if isTargetDowned(target) then
         TriggerClientEvent('esx:showNotification', xPlayer.source, 'Patient ist bewusstlos, nutze Revive/Defib.')
         return
     end
 
-    if not hasItem(xPlayer, Config.Items.bandage) then
-        TriggerClientEvent('esx:showNotification', xPlayer.source, 'Keine Bandagen dabei.')
+    if not ensureSupply(xPlayer, Config.Items.bandage, fromBag, 'Keine Bandagen dabei.') then
         return
     end
 
-    removeItem(xPlayer, Config.Items.bandage)
+    consumeSupply(xPlayer, Config.Items.bandage, fromBag)
     TriggerClientEvent('clp_medic:applyEffect', target, 'heal')
 end
 
@@ -102,12 +122,15 @@ local function handleDefib(xPlayer, target)
         return
     end
 
-    if not hasItem(xPlayer, Config.Items.defib) then
-        TriggerClientEvent('esx:showNotification', xPlayer.source, 'Defibrillator fehlt.')
+    if not ensureSupply(xPlayer, Config.Items.defib, false, 'Defibrillator fehlt.') then
         return
     end
 
-    removeItem(xPlayer, Config.Items.defib)
+    local removed = removeItem(xPlayer, Config.Items.defib)
+    if not removed then
+        TriggerClientEvent('esx:showNotification', xPlayer.source, 'Defibrillator konnte nicht genutzt werden.', 'error')
+        return
+    end
 
     local successRoll = math.random(0, 100) / 100
     local succeeded = successRoll <= Config.Defib.SuccessChance
@@ -120,7 +143,7 @@ local function handleDefib(xPlayer, target)
     end
 end
 
-RegisterNetEvent('clp_medic:performTreatment', function(treatment, targetId)
+RegisterNetEvent('clp_medic:performTreatment', function(treatment, targetId, fromBag)
     local src = source
     local xPlayer = ESX.GetPlayerFromId(src)
     if not xPlayer then return end
@@ -136,17 +159,17 @@ RegisterNetEvent('clp_medic:performTreatment', function(treatment, targetId)
     end
 
     if treatment == 'revive' then
-        handleRevive(xPlayer, targetId)
+        handleRevive(xPlayer, targetId, fromBag)
     elseif treatment == 'heal' then
-        handleHeal(xPlayer, targetId)
+        handleHeal(xPlayer, targetId, fromBag)
     elseif treatment == 'bandage' or treatment == 'bandage_light' then
-        handleBandage(xPlayer, targetId, 'light')
+        handleBandage(xPlayer, targetId, 'light', fromBag)
     elseif treatment == 'bandage_medium' then
-        handleBandage(xPlayer, targetId, 'medium')
+        handleBandage(xPlayer, targetId, 'medium', fromBag)
     elseif treatment == 'bandage_heavy' then
-        handleBandage(xPlayer, targetId, 'heavy')
+        handleBandage(xPlayer, targetId, 'heavy', fromBag)
     elseif treatment == 'painkillers' then
-        handlePainkillers(xPlayer, targetId)
+        handlePainkillers(xPlayer, targetId, fromBag)
     elseif treatment == 'ekg' then
         handleEKG(xPlayer, targetId)
     elseif treatment == 'defib' then

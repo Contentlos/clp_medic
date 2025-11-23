@@ -5,8 +5,8 @@ Standalone ESX medic system built for ox_target and ox_inventory. Designed to gr
 ## Features
 - On/Off-duty system at configurable duty points (ox_target zones)
 - Revive, stabilize (light/medium/heavy), painkillers, and EKG status checks with animations and progress bars
-- Added: cyberpunk-style death/injury NUI overlay with animated EKG line, manual distress hint, and state text (stable/unstable/flatline)
-- Added: dispatch/Leitstelle tablet UI (F6 or command) with EMS calls, assignments, completion tracking, and alert pulse/sound for new calls
+- Added: cyberpunk-style death/injury NUI overlay with animated EKG line, manual distress hint, and state text (stable/unstable/flatline) plus a compact medic-side vitals card
+- Added: dispatch/Leitstelle tablet UI (F6 or command) with EMS calls, assignments, completion tracking, waypoint ping, and alert pulse/sound for new calls
 - Medic bag item that opens a treatment menu for the closest patient
 - Added: defibrillator item for advanced revive attempts with configurable success chance
 - Added: carry interaction to move downed players and put them down again
@@ -37,7 +37,7 @@ Update `config.lua` to match your server:
 - `Config.Items` – change item names to match your ox_inventory items.
 - `Config.TreatmentTimes` / `Config.HealthAdjust` – tune how long treatments take and how much health is restored.
 - `Config.Defib` – success chance + notifications for the defibrillator flow.
-- `Config.Dispatch` – command name, panic key (default G) to send a dispatch while downed, F6 keybind for the tablet, alert sounds, on-duty requirements.
+- `Config.Dispatch` – command name, panic key (default G) to send a dispatch while downed, F6 keybind for the tablet, alert sounds, on-duty requirements, waypoint ping.
 
 ### Adding vehicles
 Append to `Config.Garages[<index>].vehicles`:
@@ -61,7 +61,7 @@ INSERT INTO items (name, label, weight, stack, closeonuse, description) VALUES
 ## Usage notes
 - Only on-duty medics can use medic interactions and the garage. Duty toggles are defined in `Config.DutyStations`.
 - Medic bag (`Config.Items.medicBag`) is registered as usable; when used, it opens a context menu for the nearest player within `Config.PatientRange`.
-- Treatments consume the relevant item (bandages, painkillers, adrenaline/defib) and apply effects on the target.
+- Treatments consume the relevant item (bandages, painkillers, adrenaline/defib) and apply effects on the target; medic bag usage satisfies the supply check for bandages/painkillers/heal.
 - Defibrillator (`Config.Items.defib`) uses a short charge animation; success is controlled by `Config.Defib.SuccessChance`.
 - Carry interaction is available on downed players via ox_target; medics can also place the patient down through the stop option.
 - EKG checks return simple vitals (health number + stable/instable/critical label) and update the NUI overlay.

@@ -72,9 +72,19 @@ RegisterNetEvent('clp_medic:dispatch:alert', function(callData)
     local sound = Config.Dispatch.AlertSound or {}
     if sound.sound then
         PlaySoundFrontend(-1, sound.sound, sound.set or 'HUD_MINI_GAME_SOUNDSET', true)
+        CreateThread(function()
+            for i = 1, 2 do
+                Wait(600)
+                PlaySoundFrontend(-1, sound.sound, sound.set or 'HUD_MINI_GAME_SOUNDSET', true)
+            end
+        end)
     end
 
     ESX.ShowNotification(('Neuer Notruf #%s: %s'):format(callData.id or '?', callData.reason or 'Einsatz'))
+
+    if callData.coords then
+        SetNewWaypoint(callData.coords.x or 0.0, callData.coords.y or 0.0)
+    end
 
     SendNUIMessage({ action = 'dispatchPing', call = callData })
 end)

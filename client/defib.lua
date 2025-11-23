@@ -49,6 +49,9 @@ RegisterNetEvent('clp_medic:useDefib', function()
     ClearPedTasks(PlayerPedId())
     if not success then return end
 
+    -- NEW: follow-up CPR push to keep animation running while server validates
+    TaskPlayAnim(PlayerPedId(), animDict, anim, 8.0, -8.0, 2500, 48, 0, false, false, false)
+
     TriggerServerEvent('clp_medic:performDefib', targetId)
 end)
 
@@ -56,7 +59,12 @@ end)
 RegisterNetEvent('clp_medic:defibResult', function(succeeded)
     if succeeded then
         ESX.ShowNotification(Config.Defib.SuccessNotify)
+        SendNUIMessage({ action = 'patientOverlay', visible = true, status = 'STABIL', heart = 'Restored' })
     else
         ESX.ShowNotification(Config.Defib.FailNotify, 'error')
+        SendNUIMessage({ action = 'patientOverlay', visible = true, status = 'FLATLINE', heart = '0' })
     end
+    SetTimeout(3500, function()
+        SendNUIMessage({ action = 'patientOverlay', visible = false })
+    end)
 end)
