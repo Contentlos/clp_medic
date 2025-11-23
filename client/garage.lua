@@ -1,23 +1,10 @@
 local ESX = exports['es_extended']:getSharedObject()
 
+-- NEW: delegate garage spawns to server to avoid OneSync distance issues
 local function spawnVehicle(data)
     if not data or not data.model then return end
 
-    ESX.Game.SpawnVehicle(data.model, vec3(data.spawn.x, data.spawn.y, data.spawn.z), data.spawn.w, function(vehicle)
-        SetVehicleNumberPlateText(vehicle, ('MED%s'):format(math.random(100, 999)))
-        SetVehicleLivery(vehicle, Config.VehicleLivery)
-
-        if Config.EnableAllExtras then
-            for extra = 0, 20 do
-                if DoesExtraExist(vehicle, extra) then
-                    SetVehicleExtra(vehicle, extra, 0)
-                end
-            end
-        end
-
-        SetVehicleEngineOn(vehicle, true, true, false)
-        TaskWarpPedIntoVehicle(PlayerPedId(), vehicle, -1)
-    end)
+    TriggerServerEvent('clp_medic:spawnGarageVehicle', data)
 end
 
 local function openGarageMenu(garage)
@@ -48,6 +35,25 @@ RegisterNetEvent('clp_medic:spawnGarageVehicle', function(data)
         model = data.vehicle,
         spawn = garage.spawn
     })
+end)
+
+-- NEW: handle server-confirmed spawns and seat the medic once the entity exists
+RegisterNetEvent('clp_medic:garageVehicleSpawned', function(netId)
+    if not netId then return end
+
+    local timeout = 0
+    local vehicle
+    while timeout < 100 do
+        vehicle = NetToVeh(netId)
+        if vehicle and vehicle ~= 0 then break end
+        Wait(50)
+        timeout = timeout + 1
+    end
+
+    if not vehicle or vehicle == 0 then return end
+
+    SetVehicleEngineOn(vehicle, true, true, false)
+    TaskWarpPedIntoVehicle(PlayerPedId(), vehicle, -1)
 end)
 
 local function registerGarages()
