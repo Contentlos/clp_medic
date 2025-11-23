@@ -5,7 +5,16 @@ local carryingPairs = {}
 local function isAuthorizedMedic(src)
     if Config.Compatibility.UseAmbulanceJob then
         local xPlayer = ESX.GetPlayerFromId(src)
-        if not xPlayer or not xPlayer.job or xPlayer.job.name ~= 'ambulance' then
+        local allowed = false
+        if xPlayer and xPlayer.job then
+            for _, job in ipairs(Config.AllowedJobs) do
+                if xPlayer.job.name == job then
+                    allowed = true
+                    break
+                end
+            end
+        end
+        if not allowed then
             return false
         end
     end

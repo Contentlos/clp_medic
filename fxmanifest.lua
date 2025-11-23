@@ -23,7 +23,9 @@ client_scripts {
     -- Added: carry logic
     'client/carry.lua',
     -- Added: defibrillator handling
-    'client/defib.lua'
+    'client/defib.lua',
+    -- NEW: dispatch tablet/client sync
+    'client/dispatch.lua'
 }
 
 server_scripts {
@@ -31,7 +33,9 @@ server_scripts {
     'server/main.lua',
     'server/medical.lua',
     -- Added: carry synchronization
-    'server/carry.lua'
+    'server/carry.lua',
+    -- NEW: dispatch state + routing
+    'server/dispatch.lua'
 }
 
 dependencies {

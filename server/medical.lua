@@ -1,5 +1,21 @@
 local ESX = exports['es_extended']:getSharedObject()
 
+-- NEW: EMS job helper (respects custom EMS job naming)
+local function isAllowedJob(xPlayer)
+    if not Config.Compatibility.UseAmbulanceJob then return true end
+    for _, job in ipairs(Config.AllowedJobs) do
+        if xPlayer.job and xPlayer.job.name == job then
+            return true
+        end
+    end
+    return false
+end
+
+local function isTargetDowned(targetId)
+    local playerState = Player(targetId) and Player(targetId).state
+    return playerState and playerState.clp_medic_downed == true
+end
+
 local function hasItem(xPlayer, item)
     local count = exports.ox_inventory:Search(xPlayer.source, 'count', item)
     return (count or 0) > 0
@@ -10,6 +26,11 @@ local function removeItem(xPlayer, item)
 end
 
 local function handleRevive(xPlayer, target)
+    if not isTargetDowned(target) then
+        TriggerClientEvent('esx:showNotification', xPlayer.source, 'Patient ist nicht bewusstlos (Revive nicht möglich).')
+        return
+    end
+
     if not hasItem(xPlayer, Config.Items.adrenaline) then
         TriggerClientEvent('esx:showNotification', xPlayer.source, 'Dir fehlt Adrenalin / Advanced Revive.')
         return
@@ -20,6 +41,11 @@ local function handleRevive(xPlayer, target)
 end
 
 local function handleBandage(xPlayer, target, tier)
+    if isTargetDowned(target) then
+        TriggerClientEvent('esx:showNotification', xPlayer.source, 'Nutze Revive/Defib bei bewusstlosen Patienten.')
+        return
+    end
+
     if not hasItem(xPlayer, Config.Items.bandage) then
         TriggerClientEvent('esx:showNotification', xPlayer.source, 'Keine Bandagen dabei.')
         return
@@ -30,6 +56,11 @@ local function handleBandage(xPlayer, target, tier)
 end
 
 local function handlePainkillers(xPlayer, target)
+    if isTargetDowned(target) then
+        TriggerClientEvent('esx:showNotification', xPlayer.source, 'Patient ist bewusstlos, nutze Revive/Defib.')
+        return
+    end
+
     if not hasItem(xPlayer, Config.Items.painkillers) then
         TriggerClientEvent('esx:showNotification', xPlayer.source, 'Keine Schmerzmittel dabei.')
         return
@@ -48,8 +79,29 @@ local function handleEKG(xPlayer, target)
     TriggerClientEvent('clp_medic:checkVitals', target, xPlayer.source)
 end
 
+-- NEW: healing flow (injured but alive patients)
+local function handleHeal(xPlayer, target)
+    if isTargetDowned(target) then
+        TriggerClientEvent('esx:showNotification', xPlayer.source, 'Patient ist bewusstlos, nutze Revive/Defib.')
+        return
+    end
+
+    if not hasItem(xPlayer, Config.Items.bandage) then
+        TriggerClientEvent('esx:showNotification', xPlayer.source, 'Keine Bandagen dabei.')
+        return
+    end
+
+    removeItem(xPlayer, Config.Items.bandage)
+    TriggerClientEvent('clp_medic:applyEffect', target, 'heal')
+end
+
 -- Added: defibrillator revive
 local function handleDefib(xPlayer, target)
+    if not isTargetDowned(target) then
+        TriggerClientEvent('esx:showNotification', xPlayer.source, 'Defibrillator nur bei bewusstlosen Patienten möglich.')
+        return
+    end
+
     if not hasItem(xPlayer, Config.Items.defib) then
         TriggerClientEvent('esx:showNotification', xPlayer.source, 'Defibrillator fehlt.')
         return
@@ -73,7 +125,7 @@ RegisterNetEvent('clp_medic:performTreatment', function(treatment, targetId)
     local xPlayer = ESX.GetPlayerFromId(src)
     if not xPlayer then return end
 
-    if Config.Compatibility.UseAmbulanceJob and (not xPlayer.job or xPlayer.job.name ~= 'ambulance') then
+    if not isAllowedJob(xPlayer) then
         TriggerClientEvent('esx:showNotification', src, 'Du bist nicht berechtigt.')
         return
     end
@@ -85,6 +137,8 @@ RegisterNetEvent('clp_medic:performTreatment', function(treatment, targetId)
 
     if treatment == 'revive' then
         handleRevive(xPlayer, targetId)
+    elseif treatment == 'heal' then
+        handleHeal(xPlayer, targetId)
     elseif treatment == 'bandage' or treatment == 'bandage_light' then
         handleBandage(xPlayer, targetId, 'light')
     elseif treatment == 'bandage_medium' then
@@ -106,7 +160,7 @@ RegisterNetEvent('clp_medic:performDefib', function(targetId)
     local xPlayer = ESX.GetPlayerFromId(src)
     if not xPlayer then return end
 
-    if Config.Compatibility.UseAmbulanceJob and (not xPlayer.job or xPlayer.job.name ~= 'ambulance') then
+    if not isAllowedJob(xPlayer) then
         TriggerClientEvent('esx:showNotification', src, 'Du bist nicht berechtigt.')
         return
     end

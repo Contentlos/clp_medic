@@ -21,6 +21,12 @@ RegisterNetEvent('clp_medic:useDefib', function()
         return
     end
 
+    local targetIdx = GetPlayerFromServerId(targetId)
+    if targetIdx == -1 or not IsPedDeadOrDying(GetPlayerPed(targetIdx), true) then
+        ESX.ShowNotification('Defibrillator nur bei bewusstlosen Patienten verwenden.', 'error')
+        return
+    end
+
     local animDict = 'mini@cpr@char_a@cpr_str'
     local anim = 'cpr_pumpchest'
     RequestAnimDict(animDict)

@@ -6,9 +6,11 @@ Standalone ESX medic system built for ox_target and ox_inventory. Designed to gr
 - On/Off-duty system at configurable duty points (ox_target zones)
 - Revive, stabilize (light/medium/heavy), painkillers, and EKG status checks with animations and progress bars
 - Added: death/injury NUI overlay with animated EKG line and state text (stable/unstable/flatline)
+- Added: dispatch/Leitstelle tablet UI with EMS calls (auto-created on player down), assignments, and completion tracking
 - Medic bag item that opens a treatment menu for the closest patient
 - Added: defibrillator item for advanced revive attempts with configurable success chance
 - Added: carry interaction to move downed players and put them down again
+- Added: dedicated healing action for injured but conscious players (separate from revive)
 - Garage with configurable vehicles, spawns with livery index 4 and all extras enabled by default
 - Simple patient vitals feedback (stable/unstable/critical based on health)
 - No hard dependency on `esx_ambulancejob`; compatibility toggle provided
@@ -28,12 +30,14 @@ Standalone ESX medic system built for ox_target and ox_inventory. Designed to gr
 
 ## Configuration
 Update `config.lua` to match your server:
-- `Config.Compatibility.UseAmbulanceJob` – keep job lock to `ambulance` while migrating; set false to allow other jobs.
+- `Config.Compatibility.UseAmbulanceJob` – keep job lock to EMS job names in `Config.AllowedJobs`; set false to allow other jobs.
+- `Config.AllowedJobs` – set to your EMS job name (e.g. `ems`).
 - `Config.DutyStations` – add/remove duty locations.
 - `Config.Garages` – add more garage zones and vehicles. Each vehicle entry has `model` and `label`.
 - `Config.Items` – change item names to match your ox_inventory items.
 - `Config.TreatmentTimes` / `Config.HealthAdjust` – tune how long treatments take and how much health is restored.
 - `Config.Defib` – success chance + notifications for the defibrillator flow.
+- `Config.Dispatch` – command name, whether the tablet command is enabled, and if on-duty is required for dispatch access.
 
 ### Adding vehicles
 Append to `Config.Garages[<index>].vehicles`:
@@ -64,9 +68,14 @@ INSERT INTO items (name, label, weight, stack, closeonuse, description) VALUES
 - Garages use ox_target sphere zones; coordinates (`coords`/`spawn`) and headings can be changed per garage in `config.lua`.
 
 ## Migration tips
-- Keep `Config.Compatibility.UseAmbulanceJob = true` while `esx_ambulancejob` is active so only the ambulance job can go on duty.
+- Keep `Config.Compatibility.UseAmbulanceJob = true` while `esx_ambulancejob` is active so only the EMS job(s) in `Config.AllowedJobs` can go on duty.
 - Set it to `false` when fully migrated to allow custom jobs or whitelist logic.
 - `Config.Compatibility.AllowLegacyAlerts` is provided for custom bridging if you need to forward calls to legacy scripts (left false by default).
+
+## Dispatch / Leitstelle
+- EMS-only tablet (`/ems` by default) shows active calls, assignment status, and completion buttons.
+- Calls are auto-created when a player enters the downed/death state; completing a revive clears the call.
+- Changing the command or requiring on-duty access is handled in `Config.Dispatch`.
 
 ## Testing
 This resource has not been run inside this environment. Configure item names, job names, and coordinates for your server before deployment.

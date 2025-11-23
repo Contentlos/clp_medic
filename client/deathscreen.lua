@@ -28,6 +28,10 @@ end
 
 -- Added: listen for ESX death to show overlay
 RegisterNetEvent('esx:onPlayerDeath', function()
+    -- NEW: mark player as downed and notify server/dispatch
+    isDowned = true
+    LocalPlayer.state:set('clp_medic_downed', true, true)
+    TriggerServerEvent('clp_medic:playerDown', GetEntityCoords(PlayerPedId()))
     toggleDeathUI(true, 'flatline')
 end)
 
@@ -43,6 +47,9 @@ end)
 
 -- Added: hide overlay on spawn
 AddEventHandler('playerSpawned', function()
+    isDowned = false
+    LocalPlayer.state:set('clp_medic_downed', false, true)
+    TriggerServerEvent('clp_medic:playerRevived')
     toggleDeathUI(false, 'stable')
 end)
 

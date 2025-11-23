@@ -12,12 +12,25 @@
     <div id="overlay" class="hidden">
         <div class="backdrop"></div>
         <div class="content">
-            <div class="message">You are critically injured – wait for medical help</div>
+            <div class="message">You are critically injured – wait for EMS</div>
             <div class="ekg">
                 <div class="ekg-line">
                     <div class="pulse"></div>
                 </div>
                 <div class="state" id="ekg-state">Stable</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW: EMS dispatch / tablet UI -->
+    <div id="dispatch" class="hidden">
+        <div class="tablet">
+            <div class="tablet-header">
+                <div class="title">EMS Dispatch</div>
+                <button id="dispatch-close" aria-label="Close dispatch">&times;</button>
+            </div>
+            <div class="tablet-body">
+                <div class="call-list" id="call-list"></div>
             </div>
         </div>
     </div>

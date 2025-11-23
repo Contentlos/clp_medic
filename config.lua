@@ -3,13 +3,13 @@ Config = {}
 -- Toggle legacy compatibility. This does not hard-require esx_ambulancejob,
 -- but lets you keep its job name/grades active during the transition.
 Config.Compatibility = {
-    UseAmbulanceJob = true, -- require job name to be 'ambulance'
+    UseAmbulanceJob = true, -- require EMS job names from Config.AllowedJobs (use your custom EMS job name here)
     AllowLegacyAlerts = false -- set true if you still route alerts through esx_ambulancejob events
 }
 
--- Jobs allowed to go on duty. Add additional job names if you want multiple medical groups.
+-- Jobs allowed to go on duty. Set to your EMS job name (custom naming supported, e.g. 'ems').
 Config.AllowedJobs = {
-    'ambulance'
+    'ems'
 }
 
 -- Duty points for ox_target. Add more entries with different coords to extend service points.
@@ -55,6 +55,8 @@ Config.Items = {
 -- Treatment timings (in milliseconds)
 Config.TreatmentTimes = {
     revive = 8000,
+    -- NEW: healing (non-revive) action for injured but alive players
+    heal = 4000,
     -- Added: defibrillator charge time
     defib = 6000,
     stabilizeLight = 2500,
@@ -67,6 +69,8 @@ Config.TreatmentTimes = {
 -- Healing values applied by treatments
 Config.HealthAdjust = {
     revive = 200,
+    -- NEW: healing amount for injured patients that are still conscious
+    heal = 60,
     -- Added: health value used when reviving with the defibrillator
     defib = 200,
     bandageLight = 20,
@@ -80,6 +84,13 @@ Config.Defib = {
     SuccessChance = 1.0, -- 1.0 = always succeed, set lower for chance-based revives
     FailNotify = 'Defibrillation fehlgeschlagen.',
     SuccessNotify = 'Patient stabilisiert (Defibrillator).'
+}
+
+-- NEW: Dispatch / tablet settings
+Config.Dispatch = {
+    Command = 'ems', -- chat command to open EMS tablet/dispatch
+    EnableCommand = true,
+    RequireOnDuty = true
 }
 
 -- Maximum distance for targeting nearby patients

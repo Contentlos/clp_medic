@@ -83,6 +83,11 @@ local function getClosestPlayer()
     return nil
 end
 
+-- NEW: helper to check if a ped is downed
+local function isPedDowned(entity)
+    return IsPedDeadOrDying(entity, true)
+end
+
 -- Player interaction options
 local function canUseMedicActions()
     return onDuty and isAllowedJob()
@@ -93,16 +98,32 @@ exports.ox_target:addGlobalPlayer({
         name = 'clp_medic:revive',
         icon = 'fa-solid fa-heart-pulse',
         label = 'Revive',
-        canInteract = canUseMedicActions,
+        canInteract = function(entity)
+            return canUseMedicActions() and isPedDowned(entity)
+        end,
         onSelect = function(data)
             TriggerEvent('clp_medic:handleTreatment', 'revive', data.entity)
+        end
+    },
+    -- NEW: healing option for injured but alive players
+    {
+        name = 'clp_medic:heal',
+        icon = 'fa-solid fa-syringe',
+        label = 'Heilen',
+        canInteract = function(entity)
+            return canUseMedicActions() and not isPedDowned(entity) and (GetEntityHealth(entity) < 200)
+        end,
+        onSelect = function(data)
+            TriggerEvent('clp_medic:handleTreatment', 'heal', data.entity)
         end
     },
     {
         name = 'clp_medic:stabilize',
         icon = 'fa-solid fa-bandage',
         label = 'Bandagieren',
-        canInteract = canUseMedicActions,
+        canInteract = function(entity)
+            return canUseMedicActions() and not isPedDowned(entity)
+        end,
         onSelect = function(data)
             TriggerEvent('clp_medic:handleTreatment', 'bandage', data.entity)
         end
@@ -136,6 +157,8 @@ RegisterNetEvent('clp_medic:openMedicBag', function()
         title = 'Medic Bag',
         options = {
             { title = 'Revive', description = 'Adrenalin einsetzen, um einen Patienten zu beleben', event = 'clp_medic:startBagAction', args = { type = 'revive', target = playerId } },
+            -- NEW: healing action for conscious patients
+            { title = 'Heilen', description = 'Patienten ohne Bewusstlosigkeit versorgen', event = 'clp_medic:startBagAction', args = { type = 'heal', target = playerId } },
             { title = 'Bandage - leicht', description = 'Kleine Verletzungen versorgen', event = 'clp_medic:startBagAction', args = { type = 'bandage_light', target = playerId } },
             { title = 'Bandage - mittel', description = 'Mittlere Verletzungen versorgen', event = 'clp_medic:startBagAction', args = { type = 'bandage_medium', target = playerId } },
             { title = 'Bandage - schwer', description = 'Schwere Verletzungen versorgen', event = 'clp_medic:startBagAction', args = { type = 'bandage_heavy', target = playerId } },
@@ -184,6 +207,8 @@ RegisterNetEvent('clp_medic:handleTreatment', function(treatment, entity)
     local duration = Config.TreatmentTimes.stabilizeLight
     if treatment == 'revive' then
         duration = Config.TreatmentTimes.revive
+    elseif treatment == 'heal' then
+        duration = Config.TreatmentTimes.heal
     elseif treatment == 'ekg' then
         duration = Config.TreatmentTimes.ekg
     elseif treatment == 'bandage' or treatment == 'bandage_light' then
@@ -223,6 +248,8 @@ RegisterNetEvent('clp_medic:applyEffect', function(effect)
         SetEntityHealth(ped, Config.HealthAdjust.revive)
         ClearPedBloodDamage(ped)
         ESX.ShowNotification('Du wurdest wiederbelebt.')
+        LocalPlayer.state:set('clp_medic_downed', false, true)
+        TriggerServerEvent('clp_medic:playerRevived')
         -- Added: ensure death UI/EKG resets when revived
         TriggerEvent('clp_medic:updateEKGState', 'stable')
         TriggerEvent('clp_medic:toggleDeathUI', false, 'stable')
@@ -232,9 +259,14 @@ RegisterNetEvent('clp_medic:applyEffect', function(effect)
         SetEntityHealth(ped, Config.HealthAdjust.defib)
         ClearPedBloodDamage(ped)
         ESX.ShowNotification('Du wurdest durch Defibrillation belebt.')
+        LocalPlayer.state:set('clp_medic_downed', false, true)
+        TriggerServerEvent('clp_medic:playerRevived')
         -- Added: ensure EKG reflects stabilization
         TriggerEvent('clp_medic:updateEKGState', 'stable')
         TriggerEvent('clp_medic:toggleDeathUI', false, 'stable')
+    elseif effect == 'heal' then
+        SetEntityHealth(ped, math.min(200, GetEntityHealth(ped) + Config.HealthAdjust.heal))
+        ESX.ShowNotification('Behandlung abgeschlossen (Heilen).')
     elseif effect == 'bandage_light' then
         SetEntityHealth(ped, math.min(200, GetEntityHealth(ped) + Config.HealthAdjust.bandageLight))
         ESX.ShowNotification('Leichte Wunden wurden versorgt.')
