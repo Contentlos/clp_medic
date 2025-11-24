@@ -17,6 +17,7 @@ end
 local function stopCarry()
     carrying = false
     carriedTargetId = nil
+    PlayPlaceAnim(1200)
     ClearPedTasks(PlayerPedId())
     StopMedicAnim()
     LocalPlayer.state:set('clp_medic_carrying', false, true)

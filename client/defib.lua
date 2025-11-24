@@ -27,7 +27,8 @@ RegisterNetEvent('clp_medic:startDefib', function(targetId, fromBag)
     end
 
     local targetPed = GetPlayerPed(targetIdx)
-    if not IsPedDeadOrDying(targetPed, true) then
+    local targetState = Player(targetId) and Player(targetId).state
+    if not IsPedDeadOrDying(targetPed, true) and not (targetState and targetState.clp_medic_downed) then
         ESX.ShowNotification('Defibrillator nur bei bewusstlosen Patienten verwenden.', 'error')
         return
     end

@@ -1,22 +1,18 @@
 Config = {}
 
--- Toggle legacy compatibility. This does not hard-require esx_ambulancejob,
--- but lets you keep its job name/grades active during the transition.
 Config.Compatibility = {
-    UseAmbulanceJob = true, -- require EMS job names from Config.AllowedJobs (use your custom EMS job name here)
-    AllowLegacyAlerts = false -- set true if you still route alerts through esx_ambulancejob events
+    UseAmbulanceJob = true,
+    AllowLegacyAlerts = false
 }
 
--- Jobs allowed to go on duty. Set to your EMS job name (custom naming supported, e.g. 'ems').
 Config.AllowedJobs = {
     'ems'
 }
 
--- Duty points for ox_target. Add more entries with different coords to extend service points.
 Config.DutyStations = {
     {
         label = 'Hospital Reception',
-        coords = vec3(308.26, -595.21, 43.28),
+        coords = vec3(1141.6531, -1537.7006, 35.3759),
         radius = 1.5
     },
     {
@@ -26,7 +22,6 @@ Config.DutyStations = {
     }
 }
 
--- Garage configuration. Add vehicles by appending to Vehicles with model + label.
 Config.Garages = {
     {
         label = 'Pillbox Garage',
@@ -41,23 +36,18 @@ Config.Garages = {
     }
 }
 
--- Medical items. Ensure these exist in ox_inventory items table. See README for SQL samples.
 Config.Items = {
     medicBag = 'medic_bag',
-    bandage = 'med_bandage',
+    bandage = 'bandage',
     painkillers = 'painkillers',
-    ekg = 'med_ekg',
+    ekg = 'ekg',
     adrenaline = 'med_adrenaline',
-    -- Added: defibrillator item used for advanced revives
     defib = 'defib'
 }
 
--- Treatment timings (in milliseconds)
 Config.TreatmentTimes = {
     revive = 8000,
-    -- NEW: healing (non-revive) action for injured but alive players
     heal = 4000,
-    -- Added: defibrillator charge time
     defib = 6000,
     stabilizeLight = 2500,
     stabilizeMedium = 4500,
@@ -66,12 +56,9 @@ Config.TreatmentTimes = {
     ekg = 2500
 }
 
--- Healing values applied by treatments
 Config.HealthAdjust = {
     revive = 200,
-    -- NEW: healing amount for injured patients that are still conscious
     heal = 60,
-    -- Added: health value used when reviving with the defibrillator
     defib = 200,
     bandageLight = 20,
     bandageMedium = 35,
@@ -79,18 +66,15 @@ Config.HealthAdjust = {
     painkillers = 15
 }
 
--- Added: defibrillator behavior configuration
 Config.Defib = {
-    -- NEW: treat defib as tool/ability (not consumed) and gate by equipment
-    RequiresItem = true, -- requires Config.Items.defib in inventory (or medic bag if AllowWithBag)
-    AllowWithBag = true, -- allow medic bag to count as equipment carrier for defib
-    ConsumeOnUse = false, -- set true if you want to remove the defib item per use
-    SuccessChance = 1.0, -- 1.0 = always succeed, set lower for chance-based revives
+    RequiresItem = true,
+    AllowWithBag = true,
+    ConsumeOnUse = false,
+    SuccessChance = 1.0,
     FailNotify = 'Defibrillation fehlgeschlagen.',
     SuccessNotify = 'Patient stabilisiert (Defibrillator).'
 }
 
--- NEW: animation presets for immersive EMS actions
 Config.Animations = {
     CPR2 = { dict = 'missheistfbi3b_ig8_2', clip = 'cpr2_idle', flag = 1 },
     CPR_PUMP = { dict = 'mini@cpr@char_a@cpr_str', clip = 'cpr_pumpchest', flag = 49 },
@@ -103,33 +87,25 @@ Config.Animations = {
     Flavor = { dict = 'amb@medic@standing@kneel@base', clip = 'base', flag = 49 }
 }
 
--- NEW: Dispatch / tablet settings
 Config.Dispatch = {
-    Command = 'ems', -- chat command to open EMS tablet/dispatch
+    Command = 'ems',
     EnableCommand = true,
     RequireOnDuty = true,
-    -- NEW: manual distress key (hold/press while downed to send dispatch)
-    PanicKey = 47, -- default: G key
-    PanicKeyLabel = 'G', -- UI hint label
-    AutoOnDeath = false, -- when false, player must press PanicKey to send dispatch
-    OpenKey = 'F6', -- key binding for the leitstelle tablet
+    PanicKey = 47,
+    PanicKeyLabel = 'G',
+    AutoOnDeath = false,
+    OpenKey = 'F6',
     AlertSound = { sound = 'TIMER_STOP', set = 'HUD_MINI_GAME_SOUNDSET' },
-    -- NEW: unit status list and whether to set waypoints when accepting a call
     UnitStatuses = { 'available', 'en_route', 'on_scene', 'hospital', 'out_of_service' },
     SetWaypointOnAccept = true,
     DefaultPriority = 2
 }
 
--- Maximum distance for targeting nearby patients
 Config.PatientRange = 3.0
 
--- Livery index used for spawned vehicles
 Config.VehicleLivery = 4
-
--- Whether to auto-enable all extras on spawned vehicles
 Config.EnableAllExtras = true
 
--- NEW: hospital beds / treatment spots
 Config.HospitalBeds = {
     {
         label = 'ICU Bed 1',
@@ -143,7 +119,6 @@ Config.HospitalBeds = {
     }
 }
 
--- NEW: EMS locker / supply points
 Config.Lockers = {
     {
         label = 'EMS Locker',
@@ -158,26 +133,22 @@ Config.Lockers = {
     }
 }
 
--- NEW: optional billing
 Config.Billing = {
     Enabled = false,
     Amount = 750,
     SocietyAccount = 'society_ems'
 }
 
--- NEW: grade-based permissions (set to your EMS grades)
 Config.Ranks = {
     DispatchControl = { 2, 3, 4 },
     Billing = { 1, 2, 3, 4 },
     Locker = { 0, 1, 2, 3, 4 }
 }
 
--- NEW: roleplay flavor actions (ox_target menu entries)
 Config.FlavorChecks = {
     { label = 'Puls prüfen', text = 'Du prüfst den Puls...', result = 'Puls ist schwach' },
     { label = 'Atmung prüfen', text = 'Du prüfst die Atmung...', result = 'Atmung ist flach' },
     { label = 'Pupillen prüfen', text = 'Du prüfst die Pupillen...', result = 'Pupillen reagieren langsam' }
 }
 
--- Debug printing
 Config.Debug = false

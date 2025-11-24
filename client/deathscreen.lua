@@ -15,7 +15,6 @@ local function toggleDeathUI(state, ekgState)
     sendUI({
         action = state and 'showDeathscreen' or 'hideDeathscreen',
         status = currentState,
-        panicKey = Config.Dispatch.PanicKey,
         panicLabel = Config.Dispatch.PanicKeyLabel
     })
 end
@@ -37,7 +36,12 @@ RegisterNetEvent('esx:onPlayerDeath', function()
     dispatchSent = false
     lastCoords = GetEntityCoords(PlayerPedId())
     TriggerServerEvent('clp_medic:playerDown', lastCoords)
-    toggleDeathUI(true, 'flatline')
+    toggleDeathUI(true, 'unstable')
+    SetTimeout(1000, function()
+        if isDowned then
+            sendUI({ action = 'setEKGState', status = 'flatline' })
+        end
+    end)
 end)
 
 -- Added: allow other scripts to explicitly toggle the death UI

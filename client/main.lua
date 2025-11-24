@@ -85,7 +85,10 @@ end
 
 -- NEW: helper to check if a ped is downed
 local function isPedDowned(entity)
-    return IsPedDeadOrDying(entity, true)
+    if IsPedDeadOrDying(entity, true) then return true end
+    local targetId = NetworkGetPlayerIndexFromPed(entity)
+    local state = targetId ~= -1 and Player(GetPlayerServerId(targetId)) and Player(GetPlayerServerId(targetId)).state
+    return state and state.clp_medic_downed == true
 end
 
 -- Player interaction options

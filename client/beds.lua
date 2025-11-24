@@ -84,7 +84,7 @@ for _, locker in ipairs(Config.Lockers) do
                     return LocalPlayer.state.clp_medic_onDuty == true and canUse()
                 end,
                 onSelect = function()
-                    TriggerServerEvent('clp_medic:locker:request')
+                    TriggerServerEvent('clp_medic:locker:request', index)
                 end
             }
         }

@@ -24,7 +24,7 @@ local function gradeAllowed(xPlayer, list)
 end
 
 -- Locker access gives configured loadout
-RegisterNetEvent('clp_medic:locker:request', function()
+RegisterNetEvent('clp_medic:locker:request', function(lockerIndex)
     local src = source
     local xPlayer = ESX.GetPlayerFromId(src)
     if not xPlayer or not isAllowedJob(src) then return end
@@ -33,10 +33,14 @@ RegisterNetEvent('clp_medic:locker:request', function()
         return
     end
 
-    for _, item in ipairs(Config.Lockers[1].loadout or {}) do
+    lockerIndex = tonumber(lockerIndex or 1)
+    local locker = Config.Lockers[lockerIndex]
+    if not locker then return end
+
+    for _, item in ipairs(locker.loadout or {}) do
         exports.ox_inventory:AddItem(src, item.item, item.count or 1)
     end
-    TriggerClientEvent('esx:showNotification', src, 'Ausrüstung entnommen.')
+    TriggerClientEvent('esx:showNotification', src, ('Ausrüstung aus %s entnommen.'):format(locker.label or 'Spind'))
 end)
 
 -- Billing helper (optional)

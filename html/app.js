@@ -7,6 +7,7 @@ const subtext = document.querySelector('.subtext');
 const dispatchWrapper = document.getElementById('dispatch');
 const callList = document.getElementById('call-list');
 const unitList = document.getElementById('unit-list');
+const unitControls = document.getElementById('unit-controls');
 const closeDispatchBtn = document.getElementById('dispatch-close');
 const patientCard = document.getElementById('patient-card');
 const patientStatus = document.getElementById('patient-status');
@@ -114,11 +115,24 @@ function renderUnits(units = []) {
     });
 }
 
-function toggleDispatch(visible, calls, units) {
+function renderUnitControls(statuses = []) {
+    if (!unitControls) return;
+    unitControls.innerHTML = '';
+    statuses.forEach((status) => {
+        const btn = document.createElement('button');
+        btn.dataset.action = 'unit-status';
+        btn.dataset.status = status;
+        btn.textContent = status.replace('_', ' ');
+        unitControls.appendChild(btn);
+    });
+}
+
+function toggleDispatch(visible, calls, units, statuses) {
     if (visible) {
         dispatchWrapper.classList.remove('hidden');
         renderCalls(calls || []);
         renderUnits(units || []);
+        renderUnitControls(statuses || []);
     } else {
         dispatchWrapper.classList.add('hidden');
     }
@@ -166,16 +180,23 @@ window.addEventListener('message', (event) => {
     }
 
     if (data.action === 'dispatchOpen') {
-        toggleDispatch(true, data.calls || [], data.units || []);
+        toggleDispatch(true, data.calls || [], data.units || [], data.statuses || []);
+        if (data.patient) {
+            togglePatientCard(true, data.patient.state, data.patient.health);
+        } else {
+            togglePatientCard(false);
+        }
     }
 
     if (data.action === 'dispatchUpdate') {
         renderCalls(data.calls || []);
         renderUnits(data.units || []);
+        renderUnitControls(data.statuses || []);
     }
 
     if (data.action === 'dispatchClose') {
         toggleDispatch(false);
+        togglePatientCard(false);
     }
 
     if (data.action === 'dispatchPing') {

@@ -13,7 +13,17 @@ end
 
 local function isTargetDowned(targetId)
     local playerState = Player(targetId) and Player(targetId).state
-    return playerState and playerState.clp_medic_downed == true
+    if playerState and playerState.clp_medic_downed then
+        return true
+    end
+
+    -- NEW: fallback to server-side ped health in case the synced state was not set yet
+    local ped = GetPlayerPed(targetId)
+    if ped and ped ~= 0 then
+        return IsPedFatallyInjured(ped) or IsPedDeadOrDying(ped, true) or GetEntityHealth(ped) <= 0
+    end
+
+    return false
 end
 
 local function hasItem(xPlayer, item)
@@ -123,15 +133,21 @@ local function handleDefib(xPlayer, target, fromBag)
     end
 
     if Config.Defib.RequiresItem then
+        local hasKit = false
         if Config.Defib.AllowWithBag and hasItem(xPlayer, Config.Items.medicBag) then
-            -- bag counts as equipment
-        elseif not hasItem(xPlayer, Config.Items.defib) then
-            TriggerClientEvent('esx:showNotification', xPlayer.source, 'Defibrillator fehlt.')
-            return
+            hasKit = true
         end
 
-        if Config.Defib.ConsumeOnUse then
-            removeItem(xPlayer, Config.Items.defib)
+        if hasItem(xPlayer, Config.Items.defib) then
+            hasKit = true
+            if Config.Defib.ConsumeOnUse then
+                removeItem(xPlayer, Config.Items.defib)
+            end
+        end
+
+        if not hasKit then
+            TriggerClientEvent('esx:showNotification', xPlayer.source, 'Defibrillator fehlt.')
+            return
         end
     end
 

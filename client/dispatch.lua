@@ -2,6 +2,26 @@
 local ESX = exports['es_extended']:getSharedObject()
 local tabletOpen = false
 
+local function nearbyPatientData()
+    local closestPlayer, distance = ESX.Game.GetClosestPlayer()
+    if closestPlayer == -1 or distance > Config.PatientRange then return nil end
+
+    local ped = GetPlayerPed(closestPlayer)
+    local health = GetEntityHealth(ped)
+    local state = 'alive'
+    if IsPedDeadOrDying(ped, true) then
+        state = 'downed'
+    elseif health < 150 then
+        state = 'injured'
+    end
+
+    return {
+        name = GetPlayerName(closestPlayer) or ('ID %s'):format(GetPlayerServerId(closestPlayer)),
+        health = health,
+        state = state
+    }
+end
+
 local function isAllowedJob()
     if not Config.Compatibility.UseAmbulanceJob then return true end
     local playerData = ESX.GetPlayerData()
@@ -35,7 +55,9 @@ local function openTablet(calls, units)
     SendNUIMessage({
         action = 'dispatchOpen',
         calls = calls or {},
-        units = units or {}
+        units = units or {},
+        statuses = Config.Dispatch.UnitStatuses or {},
+        patient = nearbyPatientData()
     })
 end
 
@@ -75,7 +97,7 @@ end)
 
 RegisterNetEvent('clp_medic:dispatch:update', function(calls, units)
     if tabletOpen then
-        SendNUIMessage({ action = 'dispatchUpdate', calls = calls or {}, units = units or {} })
+        SendNUIMessage({ action = 'dispatchUpdate', calls = calls or {}, units = units or {}, statuses = Config.Dispatch.UnitStatuses or {} })
     end
 end)
 
