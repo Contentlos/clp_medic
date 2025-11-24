@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLP Medic - EKG</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <!-- Added: death/injury overlay with EKG monitor -->
+    <div id="overlay" class="hidden">
+        <div class="backdrop"></div>
+        <div class="scanlines"></div>
+        <div class="content">
+            <div class="badge">CRITICAL // BIO-SIG</div>
+            <div class="message">You are critically injured – wait for EMS</div>
+            <div class="ekg">
+                <div class="ekg-line">
+                    <div class="pulse"></div>
+                </div>
+                <div class="state" id="ekg-state">Flatline</div>
+            </div>
+            <div class="callout" id="distress">Press <span id="panic-key">G</span> to send dispatch</div>
+            <div class="subtext">Signal is offline until you send a distress ping.</div>
+        </div>
+    </div>
+
+    <!-- NEW: EMS dispatch / tablet UI -->
+    <div id="dispatch" class="hidden">
+        <div class="tablet">
+            <div class="tablet-glow"></div>
+            <div class="tablet-header">
+                <div class="title">EMS // NET DISPATCH</div>
+                <button id="dispatch-close" aria-label="Close dispatch">&times;</button>
+            </div>
+            <div class="tablet-body">
+                <div class="split">
+                    <div class="call-list" id="call-list"></div>
+                    <div class="unit-panel">
+                        <div class="panel-title">Units</div>
+                        <div class="unit-controls" id="unit-controls"></div>
+                        <div class="unit-list" id="unit-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW: compact patient vitals overlay for medics -->
+    <div id="patient-card" class="hidden">
+        <div class="holo"></div>
+        <div class="card-body">
+            <div class="label">PATIENT EKG</div>
+            <div class="readout">
+                <span class="stat" id="patient-status">--</span>
+                <span class="heart" id="patient-heart">--</span>
+            </div>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
